@@ -187,8 +187,11 @@ export const DynamicNavbar = (): JSX.Element => {
         });
     };
 
-    const handleEyeClick = (eyeRef: React.RefObject<HTMLDivElement>) => {
-        if (!eyeRef.current) return;
+    const handleEyeClick = (side: 'left' | 'right') => {
+        const eyeRef = side === 'left' ? leftEyeContainerRef : rightEyeContainerRef;
+        const pupilRef = side === 'left' ? leftPupilRef : rightPupilRef;
+
+        if (!eyeRef.current || !pupilRef.current) return;
 
         const tl = gsap.timeline();
 
@@ -203,8 +206,6 @@ export const DynamicNavbar = (): JSX.Element => {
                 ease: "elastic.out(1, 0.5)",
                 delay: 0.1
             });
-
-        const pupilRef = eyeRef === leftEyeContainerRef ? leftPupilRef : rightPupilRef;
 
         gsap.to(pupilRef.current, {
             opacity: 0,
@@ -224,7 +225,7 @@ export const DynamicNavbar = (): JSX.Element => {
             >
                 <div
                     ref={leftEyeContainerRef}
-                    onClick={() => handleEyeClick(leftEyeContainerRef)}
+                    onClick={() => handleEyeClick('left')}
                     className="flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
                 >
                     <div className="w-7 h-7 bg-black rounded-full flex items-center justify-center relative overflow-hidden">
@@ -256,7 +257,7 @@ export const DynamicNavbar = (): JSX.Element => {
                 </div>
                 <div
                     ref={rightEyeContainerRef}
-                    onClick={() => handleEyeClick(rightEyeContainerRef)}
+                    onClick={() => handleEyeClick('right')}
                     className="flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
                 >
                     <div className="w-7 h-7 bg-black rounded-full flex items-center justify-center relative overflow-hidden">

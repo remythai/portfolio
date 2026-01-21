@@ -41,7 +41,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
-      
+
       tl.fromTo(
         textRef.current,
         { opacity: 0, y: 50 },
@@ -60,35 +60,43 @@ export const IntroductionHeroSection = (): JSX.Element => {
   return (
     <section className="relative w-full h-screen bg-[#d7d7d7] overflow-hidden">
       <div
-        className="absolute inset-0 bg-[#303030]"
+        className="absolute inset-0 bg-[#303030] hidden lg:block"
         style={{
           clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 42% 100%)'
         }}
       />
-      <div className="relative w-full h-full flex items-center px-4 lg:px-[271px] z-10">
-        <div className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-          <div ref={textRef} className="w-full lg:w-auto flex flex-col justify-center items-center lg:items-start order-2 lg:order-1">
-            <div className="text-center lg:text-left">
-              <p className="font-raleway font-bold text-black text-2xl sm:text-3xl md:text-[40px] mb-4 md:mb-6">
+
+      <div
+        className="absolute inset-0 bg-[#303030]/80 backdrop-blur-sm lg:hidden"
+        style={{
+          clipPath: 'polygon(0 70%, 100% 50%, 100% 100%, 0 100%)'
+        }}
+      />
+
+      <div className="relative w-full h-full hidden lg:flex items-center px-4 lg:px-[271px] z-10">
+        <div className="w-full flex flex-row items-center gap-12">
+          <div ref={textRef} className="w-auto flex flex-col justify-center items-start">
+            <div className="text-left">
+              <p className="font-raleway font-bold text-black text-[40px] mb-6">
                 Bonjour, je suis
               </p>
 
-              <h1 className="font-raleway font-bold text-black text-4xl sm:text-5xl md:text-6xl lg:text-[80px] leading-tight mb-4 md:mb-6">
+              <h1 className="font-raleway font-bold text-black text-[80px] leading-tight mb-6">
                 Rémy Thai
               </h1>
 
-              <p className="font-raleway font-extrabold text-[#909090] text-lg sm:text-xl md:text-[25px] mb-8 md:mb-12">
+              <p className="font-raleway font-extrabold text-[#909090] text-[25px] mb-12">
                 Développeur informatique
               </p>
 
-              <div className="flex gap-6 md:gap-8 justify-center lg:justify-start">
+              <div className="flex gap-8 justify-start">
                 {socialIcons.map((social, index) => (
                   <a
                     key={index}
                     href={social.href}
                     target={social.alt !== "CV" ? "_blank" : undefined}
                     rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
-                    className="w-14 h-14 md:w-16 md:h-16 bg-[#c4c4c4] shadow-lg hover:shadow-xl hover:scale-110 hover:bg-[#b0b0b0] transition-all flex items-center justify-center text-[#303030]"
+                    className="w-16 h-16 bg-[#c4c4c4] shadow-lg hover:shadow-xl hover:scale-110 hover:bg-[#b0b0b0] transition-all flex items-center justify-center text-[#303030]"
                     aria-label={social.alt}
                   >
                     {social.icon}
@@ -97,7 +105,8 @@ export const IntroductionHeroSection = (): JSX.Element => {
               </div>
             </div>
           </div>
-          <div ref={imageRef} className="absolute bottom-0 right-[150px] order-1 lg:order-2 hidden lg:block">
+
+          <div className="absolute bottom-0 right-[150px]">
             <div className="relative w-[700px] h-[784px]">
               <Image
                 src="/remy.png"
@@ -110,19 +119,48 @@ export const IntroductionHeroSection = (): JSX.Element => {
               />
             </div>
           </div>
-          <div className="relative flex-shrink-0 order-1 lg:hidden">
-            <div className="relative w-[250px] sm:w-[350px] h-[280px] sm:h-[392px]">
-              <Image
-                src="/remy.png"
-                alt="Rémy Thai professional photo"
-                fill
-                sizes="(max-width: 640px) 250px, 350px"
-                className="object-cover object-top"
-                priority
-                quality={85}
-              />
-            </div>
+        </div>
+      </div>
+      <div className="relative w-full h-full flex lg:hidden">
+        <div ref={imageRef} className="absolute bottom-0 left-0 right-0 z-0">
+          <div className="relative w-full h-[850px]">
+            <Image
+              src="/remy.png"
+              alt="Rémy Thai professional photo"
+              fill
+              sizes="100vw"
+              className="object-cover object-top"
+              priority
+              quality={85}
+            />
           </div>
+        </div>
+        <div ref={textRef} className="absolute bottom-6 left-6 z-10">
+          <p className="font-raleway font-bold text-white text-lg mb-2">
+            Bonjour, je suis
+          </p>
+
+          <h1 className="font-raleway font-bold text-white text-4xl leading-tight mb-2">
+            Rémy Thai
+          </h1>
+
+          <p className="font-raleway font-extrabold text-gray-300 text-base">
+            Développeur informatique
+          </p>
+        </div>
+        <div className="absolute bottom-6 right-6 flex flex-col gap-3 z-20">
+          {socialIcons.map((social, index) => (
+            <a
+              key={index}
+              href={social.href}
+              target={social.alt !== "CV" ? "_blank" : undefined}
+              rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
+              className="w-12 h-12 bg-[#c4c4c4] shadow-lg hover:shadow-xl hover:scale-110 hover:bg-[#b0b0b0] transition-all flex items-center justify-center text-[#303030] rounded"
+              aria-label={social.alt}
+            >
+              {social.icon}
+            </a>
+          ))}
         </div>
       </div>
     </section>

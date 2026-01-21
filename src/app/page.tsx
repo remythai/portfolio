@@ -17,7 +17,7 @@ export default function Home() {
       <ProjectGallerySection />
       <ContactFormSection />
       <SocialMediaFooterSection />
-      <FloatingNav />
+      {/* <FloatingNav /> */}
     </main>
   );
 }

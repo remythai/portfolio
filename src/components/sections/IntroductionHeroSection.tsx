@@ -3,17 +3,10 @@
 import { JSX, useEffect, useRef } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
-import { smoothScrollTo } from "@/lib/smoothScroll";
 
 export const IntroductionHeroSection = (): JSX.Element => {
   const imageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-
-  const navigationLinks = [
-    { label: "A propos", href: "#about" },
-    { label: "Compétences", href: "#skills" },
-    { label: "Portfolio", href: "#portfolio" },
-  ];
 
   const socialIcons = [
     {
@@ -48,11 +41,11 @@ export const IntroductionHeroSection = (): JSX.Element => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
-
+      
       tl.fromTo(
         textRef.current,
         { opacity: 0, y: 50 },
-        { opacity: 1, y: 0, duration: 1, ease: "power3.out" }
+        { opacity: 1, y: 0, duration: 1, ease: "power3.out", delay: 0.3 }
       ).fromTo(
         imageRef.current,
         { opacity: 0, scale: 0.95 },
@@ -65,51 +58,13 @@ export const IntroductionHeroSection = (): JSX.Element => {
   }, []);
 
   return (
-    <section id="hero" className="relative w-full h-screen bg-[#d7d7d7] overflow-hidden">
+    <section className="relative w-full h-screen bg-[#d7d7d7] overflow-hidden">
       <div
         className="absolute inset-0 bg-[#303030]"
         style={{
-          clipPath: 'polygon(60% 0, 100% 0, 100% 100%, 42% 100%)'
+          clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 42% 100%)'
         }}
       />
-
-      <nav className="absolute top-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-        <div className="hidden lg:flex items-center gap-4 xl:gap-8">
-          {navigationLinks.map((link, index) => (
-            <a
-              key={index}
-              href={link.href}
-              onClick={(e) => {
-                e.preventDefault();
-                smoothScrollTo(link.href);
-              }}
-              className="font-montserrat font-bold text-white text-sm xl:text-[17px] hover:text-gray-300 transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
-          <a
-            href="#contact"
-            onClick={(e) => {
-              e.preventDefault();
-              smoothScrollTo("#contact");
-            }}
-            className="px-6 py-2 bg-white text-black rounded-full border-4 border-white font-montserrat font-bold text-sm xl:text-[15px] hover:bg-transparent hover:text-white transition-all"
-          >
-            ME CONTACTER
-          </a>
-        </div>
-
-        <button
-          className="lg:hidden p-2 text-white"
-          aria-label="Menu"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </nav>
-
       <div className="relative w-full h-full flex items-center px-4 lg:px-[271px] z-10">
         <div className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
           <div ref={textRef} className="w-full lg:w-auto flex flex-col justify-center items-center lg:items-start order-2 lg:order-1">

@@ -24,7 +24,7 @@ export const EducationSection = (): JSX.Element => {
   const lineRef = useRef<HTMLDivElement>(null);
   const eventsRef = useRef<(HTMLDivElement | null)[]>([]);
   const detailsRef = useRef<(HTMLDivElement | null)[]>([]);
-  
+
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const timelineEvents: TimelineEvent[] = [
@@ -74,7 +74,7 @@ export const EducationSection = (): JSX.Element => {
       ],
       status: "completed"
     },
-    
+
     {
       year: "2025",
       period: "EPITECH YEAR 3 - S1",
@@ -137,26 +137,22 @@ export const EducationSection = (): JSX.Element => {
         });
       }
 
-      // Calcule la hauteur réelle avant l'animation
       setExpandedIndex(index);
       const content = detail.querySelector('.detail-content') as HTMLElement;
-      
-      // Mesure temporaire de la hauteur
+
       gsap.set(detail, { height: "auto", opacity: 0 });
       const autoHeight = detail.offsetHeight;
       gsap.set(detail, { height: 0 });
 
-      // Animation d'ouverture avec la hauteur calculée
       gsap.to(detail, {
         height: autoHeight,
         opacity: 1,
         duration: 0.6,
         ease: "power2.out"
       });
-      
-      // Animation du contenu
+
       if (content) {
-        gsap.fromTo(content, 
+        gsap.fromTo(content,
           { y: -20, opacity: 0 },
           { y: 0, opacity: 1, duration: 0.5, delay: 0.2, ease: "power2.out" }
         );
@@ -167,7 +163,7 @@ export const EducationSection = (): JSX.Element => {
   const handleLinkHover = (linkElement: HTMLAnchorElement, isEntering: boolean) => {
     const underline = linkElement.querySelector('.link-underline');
     const icon = linkElement.querySelector('.link-icon');
-    
+
     if (isEntering) {
       gsap.to(underline, {
         scaleX: 1,
@@ -200,7 +196,7 @@ export const EducationSection = (): JSX.Element => {
       case 'github':
         return (
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
           </svg>
         );
       default:
@@ -218,7 +214,7 @@ export const EducationSection = (): JSX.Element => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         lineRef.current,
-        { 
+        {
           height: "0%",
           opacity: 0.3
         },
@@ -239,7 +235,7 @@ export const EducationSection = (): JSX.Element => {
         if (!event) return;
 
         const isLeft = index % 2 === 0;
-        
+
         gsap.fromTo(
           event,
           {
@@ -304,27 +300,26 @@ export const EducationSection = (): JSX.Element => {
   };
 
   return (
-    <section 
+    <section
       ref={sectionRef}
       className="relative w-full min-h-screen py-16 md:py-24"
     >
-      {/* Fond #303030 */}
       <div className="absolute inset-0 bg-[#303030] -z-10" />
-      
+
       <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-24 max-w-7xl">
         <div className="mb-16 md:mb-24">
           <h2 className="font-bold text-white text-2xl md:text-3xl tracking-[5.56px] mb-6">
             MON PARCOURS
           </h2>
           <p className="font-normal text-white text-sm md:text-[15px] leading-relaxed max-w-2xl">
-            De mes études secondaires à ma formation d'ingénieur chez Epitech, 
+            De mes études secondaires à ma formation d'ingénieur chez Epitech,
             découvrez les étapes clés qui ont façonné mon parcours professionnel.
           </p>
         </div>
 
         <div className="relative">
           <div className="absolute left-1/2 top-0 w-0.5 h-full -translate-x-1/2 bg-white/20 hidden md:block">
-            <div 
+            <div
               ref={lineRef}
               className="absolute top-0 left-0 w-full bg-white origin-top"
               style={{ height: "0%" }}
@@ -332,7 +327,7 @@ export const EducationSection = (): JSX.Element => {
           </div>
 
           <div className="absolute left-6 top-0 w-0.5 h-full bg-white/20 md:hidden">
-            <div 
+            <div
               ref={lineRef}
               className="absolute top-0 left-0 w-full bg-white origin-top"
               style={{ height: "0%" }}
@@ -343,39 +338,36 @@ export const EducationSection = (): JSX.Element => {
             {timelineEvents.map((event, index) => {
               const isLeft = index % 2 === 0;
               const isExpanded = expandedIndex === index;
-              
+
               return (
                 <div
                   key={index}
                   ref={(el) => { eventsRef.current[index] = el; }}
-                  className={`relative flex items-start ${
-                    isLeft ? 'md:flex-row' : 'md:flex-row-reverse'
-                  } flex-row`}
+                  className={`relative flex items-start ${isLeft ? 'md:flex-row' : 'md:flex-row-reverse'
+                    } flex-row`}
                 >
-                  <div className={`w-full md:w-[calc(50%-2rem)] ${
-                    isLeft ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'
-                  } pl-16 md:pl-0`}>
+                  <div className={`w-full md:w-[calc(50%-2rem)] ${isLeft ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'
+                    } pl-16 md:pl-0`}>
                     <div className="space-y-3">
-                      <div className={`inline-block px-4 py-1 border-l-2 ${
-                        event.status === "current" 
-                          ? "border-blue-400" 
+                      <div className={`inline-block px-4 py-1 border-l-2 ${event.status === "current"
+                          ? "border-blue-400"
                           : event.status === "completed"
-                          ? "border-white"
-                          : "border-white/30"
-                      }`}>
+                            ? "border-white"
+                            : "border-white/30"
+                        }`}>
                         <span className="font-bold text-white text-xs md:text-sm tracking-[1.6px]">
                           {event.period}
                         </span>
                       </div>
-                      
+
                       <h3 className="font-bold text-white text-lg md:text-xl">
                         {event.title}
                       </h3>
-                      
+
                       <p className="font-normal text-white/80 text-sm md:text-[15px] leading-relaxed">
                         {event.description}
                       </p>
-                      
+
                       <p className="font-semibold text-white/60 text-xs">
                         {event.year}
                       </p>
@@ -383,15 +375,15 @@ export const EducationSection = (): JSX.Element => {
                       <div className={`flex ${isLeft ? 'md:justify-end' : 'md:justify-start'}`}>
                         <button
                           onClick={() => toggleDetails(index)}
-                          className="group flex items-center gap-2 mt-4 text-white/70 hover:text-white transition-colors duration-300"
+                          className="group flex items-center gap-2 mt-4 text-white/70 hover:text-white transition-colors duration-300 select-text cursor-pointer"
                         >
                           <span className="text-sm font-medium">
                             {isExpanded ? 'Voir moins' : 'En savoir plus'}
                           </span>
-                          <svg 
+                          <svg
                             className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-                            fill="none" 
-                            stroke="currentColor" 
+                            fill="none"
+                            stroke="currentColor"
                             viewBox="0 0 24 24"
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -406,10 +398,10 @@ export const EducationSection = (): JSX.Element => {
                         style={{ height: 0, opacity: 0 }}
                       >
                         <div className="detail-content mt-4 pt-4 border-t border-white/20">
-                          <p className="font-normal text-white/70 text-sm md:text-[15px] leading-relaxed mb-4">
+                          <p className="font-normal text-white/70 text-sm md:text-[15px] leading-relaxed mb-4 select-text">
                             {event.detailedDescription}
                           </p>
-                          
+
                           {event.links && event.links.length > 0 && (
                             <div className={`flex flex-wrap gap-3 ${isLeft ? 'md:justify-end' : 'md:justify-start'}`}>
                               {event.links.map((link, linkIndex) => (
@@ -418,7 +410,7 @@ export const EducationSection = (): JSX.Element => {
                                   href={link.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="group relative inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg transition-all duration-300"
+                                  className="group relative inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg transition-all duration-300 select-text cursor-pointer"
                                   onMouseEnter={(e) => handleLinkHover(e.currentTarget, true)}
                                   onMouseLeave={(e) => handleLinkHover(e.currentTarget, false)}
                                 >

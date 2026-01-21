@@ -13,6 +13,17 @@
 }
 
 @layer base {
+  /* Désactiver la sélection de texte globalement */
+  * {
+    @apply select-none;
+  }
+  
+  /* Réactiver la sélection pour les inputs et textarea */
+  input,
+  textarea,
+  [contenteditable="true"] {
+    @apply select-text;
+  }
 
   button,
   input,

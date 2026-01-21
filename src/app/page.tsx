@@ -1,7 +1,6 @@
-import { EducationSection } from "@/components/sections/EducationSection";
-// import { ContactFormSection } from "@/components/sections/ContactFormSection";
+import { ContactFormSection } from "@/components/sections/ContactFormSection";
 import { IntroductionHeroSection } from "@/components/sections/IntroductionHeroSection"
-// import { EducationSection } from "@/components/sections/EducationSection";
+import { EducationSection } from "@/components/sections/EducationSection";
 import { ProjectGallerySection } from "@/components/sections/ProjectGallerySection";
 import { SkillsAndExperienceSection } from "@/components/sections/SkillsAndExperienceSection";
 import { SocialMediaFooterSection } from "@/components/sections/SocialMediaFooterSection";
@@ -13,7 +12,7 @@ export default function Home() {
       <EducationSection />
       <SkillsAndExperienceSection />
       <ProjectGallerySection />
-      {/* <ContactFormSection /> */}
+      <ContactFormSection />
       <SocialMediaFooterSection />
     </main>
   );

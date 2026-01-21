@@ -142,17 +142,6 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     Etudiant en 3ème année à Epitech sur le campus de Bordeaux. Curieux, créatif et déterminé, j'aime découvrir de nouveaux horizons ou bien renforcer mes compétences professionnelles mais aussi personnelles.
                 </p>
 
-                {/* Explore Button */}
-                <div className="flex justify-center mb-12 md:mb-16">
-                    <button
-                        className="relative px-8 py-2 border-l-2 border-r-2 border-black font-montserrat font-semibold text-black text-sm md:text-base tracking-wide hover:bg-black hover:text-white transition-all duration-300"
-                        aria-label="Explore more about me"
-                    >
-                        EXPLORER
-                    </button>
-                </div>
-
-                {/* Separator */}
                 <div className="w-32 md:w-40 h-1 bg-black mx-auto mb-12 md:mb-20" aria-hidden="true" />
 
                 {/* Services Grid */}

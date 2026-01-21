@@ -13,7 +13,6 @@ const filterCategories = [
 ];
 
 const projectData = [
-  // Projets EPITECH
   {
     id: 1,
     title: "AREA",
@@ -80,7 +79,6 @@ const projectData = [
     image: "/projects/paint.png",
     inProgress: false,
   },
-  // Projets AUTRES
   {
     id: 7,
     title: "Init",
@@ -127,12 +125,10 @@ export const ProjectGallerySection = (): JSX.Element => {
     return project.category.includes(activeFilter);
   });
 
-  // Animations GSAP initiales
   useEffect(() => {
     if (!sectionRef.current) return;
 
     const ctx = gsap.context(() => {
-      // Animation du titre
       gsap.from(titleRef.current, {
         opacity: 0,
         y: 50,
@@ -144,7 +140,6 @@ export const ProjectGallerySection = (): JSX.Element => {
         }
       });
 
-      // Animation stagger des projets au premier chargement
       const projectCards = projectGridRef.current?.querySelectorAll('.project-card');
       if (projectCards) {
         gsap.from(projectCards, {
@@ -165,7 +160,6 @@ export const ProjectGallerySection = (): JSX.Element => {
     return () => ctx.revert();
   }, []);
 
-  // Animation lors du changement de filtre
   useEffect(() => {
     const projectCards = projectGridRef.current?.querySelectorAll('.project-card');
     if (projectCards && projectCards.length > 0) {
@@ -188,12 +182,10 @@ export const ProjectGallerySection = (): JSX.Element => {
       ref={sectionRef}
       className="relative w-full min-h-screen bg-[#303030] pb-12 md:pb-16 lg:pb-20 overflow-hidden"
     >
-      {/* Header avec image de fond */}
       <div
         ref={titleRef}
         className="relative w-full h-48 md:h-64 lg:h-80 mb-8 md:mb-12 flex items-center justify-center overflow-hidden"
       >
-        {/* Background Image */}
         <Image
           src="/pau.jpg"
           alt="Portfolio background - Pau panoramic"
@@ -203,10 +195,8 @@ export const ProjectGallerySection = (): JSX.Element => {
           priority
         />
 
-        {/* Overlay sombre */}
         <div className="absolute inset-0 bg-black/60" />
 
-        {/* Titre par-dessus l'image */}
         <div className="relative z-10 border-4 md:border-8 border-solid border-white px-8 md:px-12 py-4 md:py-6">
           <h2 className="font-montserrat font-bold text-white text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
             PORTFOLIO
@@ -214,7 +204,6 @@ export const ProjectGallerySection = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Filter Navigation */}
       <nav
         className="max-w-2xl mx-auto px-4 mb-8 md:mb-12"
         aria-label="Portfolio filter"
@@ -224,11 +213,10 @@ export const ProjectGallerySection = (): JSX.Element => {
             <button
               key={category.id}
               onClick={() => setActiveFilter(category.id)}
-              className={`relative px-6 py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all ${
-                activeFilter === category.id
+              className={`relative px-6 py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all ${activeFilter === category.id
                   ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-white"
                   : "text-[#7c7c7c] hover:text-white"
-              }`}
+                }`}
               aria-pressed={activeFilter === category.id}
             >
               {category.label}
@@ -239,7 +227,6 @@ export const ProjectGallerySection = (): JSX.Element => {
         <div className="w-full h-px bg-[#7c7c7c] mt-2" aria-hidden="true" />
       </nav>
 
-      {/* Project Grid */}
       <div className="w-full">
         <div
           ref={projectGridRef}
@@ -250,7 +237,6 @@ export const ProjectGallerySection = (): JSX.Element => {
               key={project.id}
               className="project-card group relative aspect-[4/3] overflow-hidden transition-all duration-300"
             >
-              {/* Background Image */}
               <Image
                 src={project.image}
                 alt={project.title}
@@ -259,17 +245,14 @@ export const ProjectGallerySection = (): JSX.Element => {
                 quality={100}
               />
 
-              {/* Overlay sombre au hover */}
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/70 transition-all duration-300" />
 
-              {/* Badge "En développement" */}
               {project.inProgress && (
                 <div className="absolute top-4 right-4 z-20 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-montserrat font-semibold tracking-wide">
                   EN DÉVELOPPEMENT
                 </div>
               )}
 
-              {/* Content Overlay */}
               <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
                 {project.tags && (
                   <p className="font-montserrat font-semibold text-blue-400 text-xs md:text-sm mb-2 tracking-wide">
@@ -285,7 +268,6 @@ export const ProjectGallerySection = (): JSX.Element => {
                   {project.description}
                 </p>
 
-                {/* Project Links */}
                 <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   {project.githubLink && (
                     <>
@@ -320,8 +302,6 @@ export const ProjectGallerySection = (): JSX.Element => {
             </div>
           ))}
         </div>
-
-        {/* Footer Message */}
         <p className="text-center font-montserrat font-semibold text-white text-lg md:text-xl lg:text-2xl mt-12 md:mt-16 px-4">
           Et bien d'autres à venir !
         </p>

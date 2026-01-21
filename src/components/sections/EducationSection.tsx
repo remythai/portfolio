@@ -59,7 +59,7 @@ export const EducationSection = (): JSX.Element => {
       description: "Développement avancé, architecture logicielle et projets collaboratifs en équipe. En langage C++.",
       detailedDescription: "Projets avancés incluant le développement d'une borne d'arcade avec plusieurs librairies graphiques en C++ (Projet Arcade). Maîtrise de la Programmation Orientée Objet, des design patterns et des outils de collaboration Git. Travail en équipe sur des projets complexes.",
       links: [
-        { label: "Arcade Project", url: "https://github.com/remythai/Arcade-Epitech", type: "github" }
+        { label: "Projet Arcade", url: "https://github.com/remythai/Arcade-Epitech", type: "github" }
       ],
       status: "completed"
     },
@@ -82,8 +82,8 @@ export const EducationSection = (): JSX.Element => {
       description: "Développement full-stack, réalisation d'un moteur graphique de jeu, projets complexes et technologies modernes.",
       detailedDescription: "Projets comme l'AREA (plateforme d'Action-Reaction) avec OAuth, Next.js, React, Node.js et PostgreSQL. Maîtrise de Docker, des API REST et de l'architecture full-stack moderne. Ainsi que la réalisation du projet R-Type, reproduction du jeu R-Type en C++ en réseau avec un ECS maison.",
       links: [
-        { label: "R-TYPE Project", url: "https://github.com/remythai/R-TYPE", type: "github" },
-        { label: "AREA Project", url: "https://github.com/LoukaOrtegaCand/AREA", type: "github" }
+        { label: "Projet R-TYPE", url: "https://github.com/remythai/R-TYPE", type: "github" },
+        { label: "Projet AREA", url: "https://github.com/LoukaOrtegaCand/AREA", type: "github" }
       ],
       status: "current"
     },

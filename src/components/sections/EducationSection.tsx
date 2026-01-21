@@ -74,7 +74,6 @@ export const EducationSection = (): JSX.Element => {
       ],
       status: "completed"
     },
-
     {
       year: "2025",
       period: "EPITECH YEAR 3 - S1",
@@ -118,7 +117,6 @@ export const EducationSection = (): JSX.Element => {
     if (!detail) return;
 
     if (expandedIndex === index) {
-      // Fermeture
       gsap.to(detail, {
         height: 0,
         opacity: 0,
@@ -127,7 +125,6 @@ export const EducationSection = (): JSX.Element => {
         onComplete: () => setExpandedIndex(null)
       });
     } else {
-      // Ferme l'ancien
       if (expandedIndex !== null && detailsRef.current[expandedIndex]) {
         gsap.to(detailsRef.current[expandedIndex], {
           height: 0,
@@ -138,8 +135,6 @@ export const EducationSection = (): JSX.Element => {
       }
 
       setExpandedIndex(index);
-      const content = detail.querySelector('.detail-content') as HTMLElement;
-
       gsap.set(detail, { height: "auto", opacity: 0 });
       const autoHeight = detail.offsetHeight;
       gsap.set(detail, { height: 0 });
@@ -151,6 +146,7 @@ export const EducationSection = (): JSX.Element => {
         ease: "power2.out"
       });
 
+      const content = detail.querySelector('.detail-content') as HTMLElement;
       if (content) {
         gsap.fromTo(content,
           { y: -20, opacity: 0 },
@@ -235,12 +231,13 @@ export const EducationSection = (): JSX.Element => {
         if (!event) return;
 
         const isLeft = index % 2 === 0;
+        const isMobile = window.innerWidth < 768;
 
         gsap.fromTo(
           event,
           {
             opacity: 0,
-            x: isLeft ? -80 : 80,
+            x: isMobile ? 0 : (isLeft ? -80 : 80),
             scale: 0.9
           },
           {
@@ -303,7 +300,7 @@ export const EducationSection = (): JSX.Element => {
     <section
       id="education"
       ref={sectionRef}
-      className="relative w-full min-h-screen py-16 md:py-24"
+      className="relative w-full min-h-screen py-16 md:py-24 overflow-x-hidden"
     >
       <div className="absolute inset-0 bg-[#303030] -z-10" />
 
@@ -327,11 +324,10 @@ export const EducationSection = (): JSX.Element => {
             />
           </div>
 
-          <div className="absolute left-6 top-0 w-0.5 h-full bg-white/20 md:hidden">
+          <div className="absolute left-2 top-0 w-0.5 h-full bg-white/20 md:hidden">
             <div
-              ref={lineRef}
               className="absolute top-0 left-0 w-full bg-white origin-top"
-              style={{ height: "0%" }}
+              style={{ height: "100%" }}
             />
           </div>
 
@@ -345,16 +341,16 @@ export const EducationSection = (): JSX.Element => {
                   key={index}
                   ref={(el) => { eventsRef.current[index] = el; }}
                   className={`relative flex items-start ${isLeft ? 'md:flex-row' : 'md:flex-row-reverse'
-                    } flex-row`}
+                    }`}
                 >
                   <div className={`w-full md:w-[calc(50%-2rem)] ${isLeft ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'
-                    } pl-16 md:pl-0`}>
+                    } pl-12 md:pl-0`}>
                     <div className="space-y-3">
                       <div className={`inline-block px-4 py-1 border-l-2 ${event.status === "current"
-                        ? "border-blue-400"
-                        : event.status === "completed"
-                          ? "border-white"
-                          : "border-white/30"
+                          ? "border-blue-400"
+                          : event.status === "completed"
+                            ? "border-white"
+                            : "border-white/30"
                         }`}>
                         <span className="font-bold text-white text-xs md:text-sm tracking-[1.6px]">
                           {event.period}
@@ -376,7 +372,7 @@ export const EducationSection = (): JSX.Element => {
                       <div className={`flex ${isLeft ? 'md:justify-end' : 'md:justify-start'}`}>
                         <button
                           onClick={() => toggleDetails(index)}
-                          className="group flex items-center gap-2 mt-4 text-white/70 hover:text-white transition-colors duration-300 select-text cursor-pointer"
+                          className="group flex items-center gap-2 mt-4 text-white/70 hover:text-white transition-colors duration-300"
                         >
                           <span className="text-sm font-medium">
                             {isExpanded ? 'Voir moins' : 'En savoir plus'}
@@ -392,14 +388,13 @@ export const EducationSection = (): JSX.Element => {
                         </button>
                       </div>
 
-                      {/* Contenu caché avec height: 0 par défaut */}
                       <div
                         ref={(el) => { detailsRef.current[index] = el; }}
                         className="overflow-hidden"
                         style={{ height: 0, opacity: 0 }}
                       >
                         <div className="detail-content mt-4 pt-4 border-t border-white/20">
-                          <p className="font-normal text-white/70 text-sm md:text-[15px] leading-relaxed mb-4 select-text">
+                          <p className="font-normal text-white/70 text-sm md:text-[15px] leading-relaxed mb-4">
                             {event.detailedDescription}
                           </p>
 
@@ -411,7 +406,7 @@ export const EducationSection = (): JSX.Element => {
                                   href={link.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="group relative inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg transition-all duration-300 select-text cursor-pointer"
+                                  className="group relative inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg transition-all duration-300"
                                   onMouseEnter={(e) => handleLinkHover(e.currentTarget, true)}
                                   onMouseLeave={(e) => handleLinkHover(e.currentTarget, false)}
                                 >
@@ -430,8 +425,7 @@ export const EducationSection = (): JSX.Element => {
                       </div>
                     </div>
                   </div>
-
-                  <div className="absolute left-6 md:left-1/2 md:-translate-x-1/2 timeline-dot">
+                  <div className="absolute left-2 md:left-1/2 md:-translate-x-1/2 -translate-x-1/2 timeline-dot">
                     <div className={`w-4 h-4 rounded-full border-2 ${getStatusColor(event.status)}`} />
                     {event.status === "current" && (
                       <div className="absolute inset-0 w-4 h-4 rounded-full bg-blue-400 opacity-30 animate-ping" />

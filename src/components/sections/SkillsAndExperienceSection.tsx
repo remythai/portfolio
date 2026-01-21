@@ -125,7 +125,12 @@ const otherSkills = [
 
 export const SkillsAndExperienceSection = (): JSX.Element => {
     return (
-        <section className="relative w-full py-16 md:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50">
+        <section
+            className="relative w-full py-16 md:py-24 lg:py-32"
+            style={{
+                background: 'radial-gradient(50% 50% at 50% 50%, rgba(26, 21, 21, 0.00) 0%, rgba(1, 1, 1, 0.16) 100%), #FFF'
+            }}
+        >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative inline-block mx-auto mb-12 md:mb-16 w-full flex justify-center">
                     <div className="relative border-4 md:border-8 border-solid border-black px-8 md:px-12 py-4 md:py-6">

@@ -301,6 +301,7 @@ export const EducationSection = (): JSX.Element => {
 
   return (
     <section
+      id="education"
       ref={sectionRef}
       className="relative w-full min-h-screen py-16 md:py-24"
     >

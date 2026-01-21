@@ -52,6 +52,7 @@ export const ContactFormSection = (): JSX.Element => {
 
   return (
     <section 
+      id="contact"
       className="relative w-full min-h-screen py-12 md:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
       style={{
         background: 'radial-gradient(50% 50% at 50% 50%, rgba(26, 21, 21, 0.00) 0%, rgba(1, 1, 1, 0.16) 100%), #FFF'

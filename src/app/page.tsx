@@ -4,6 +4,7 @@ import { EducationSection } from "@/components/sections/EducationSection";
 import { ProjectGallerySection } from "@/components/sections/ProjectGallerySection";
 import { SkillsAndExperienceSection } from "@/components/sections/SkillsAndExperienceSection";
 import { SocialMediaFooterSection } from "@/components/sections/SocialMediaFooterSection";
+import { FloatingNav } from "@/components/layout/FloatingNav";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <ProjectGallerySection />
       <ContactFormSection />
       <SocialMediaFooterSection />
+      <FloatingNav />
     </main>
   );
 }

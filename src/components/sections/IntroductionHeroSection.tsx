@@ -3,6 +3,7 @@
 import { JSX, useEffect, useRef } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
+import { smoothScrollTo } from "@/lib/smoothScroll";
 
 export const IntroductionHeroSection = (): JSX.Element => {
   const imageRef = useRef<HTMLDivElement>(null);
@@ -64,7 +65,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
   }, []);
 
   return (
-    <section className="relative w-full h-screen bg-[#d7d7d7] overflow-hidden">
+    <section id="hero" className="relative w-full h-screen bg-[#d7d7d7] overflow-hidden">
       <div
         className="absolute inset-0 bg-[#303030]"
         style={{
@@ -78,6 +79,10 @@ export const IntroductionHeroSection = (): JSX.Element => {
             <a
               key={index}
               href={link.href}
+              onClick={(e) => {
+                e.preventDefault();
+                smoothScrollTo(link.href);
+              }}
               className="font-montserrat font-bold text-white text-sm xl:text-[17px] hover:text-gray-300 transition-colors"
             >
               {link.label}
@@ -85,6 +90,10 @@ export const IntroductionHeroSection = (): JSX.Element => {
           ))}
           <a
             href="#contact"
+            onClick={(e) => {
+              e.preventDefault();
+              smoothScrollTo("#contact");
+            }}
             className="px-6 py-2 bg-white text-black rounded-full border-4 border-white font-montserrat font-bold text-sm xl:text-[15px] hover:bg-transparent hover:text-white transition-all"
           >
             ME CONTACTER

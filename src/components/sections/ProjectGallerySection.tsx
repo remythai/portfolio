@@ -179,6 +179,7 @@ export const ProjectGallerySection = (): JSX.Element => {
 
   return (
     <section
+      id="portfolio"
       ref={sectionRef}
       className="relative w-full min-h-screen bg-[#303030] pb-12 md:pb-16 lg:pb-20 overflow-hidden"
     >

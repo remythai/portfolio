@@ -4,7 +4,7 @@ import { IntroductionHeroSection } from "@/components/sections/IntroductionHeroS
 // import { EducationSection } from "@/components/sections/EducationSection";
 import { ProjectGallerySection } from "@/components/sections/ProjectGallerySection";
 import { SkillsAndExperienceSection } from "@/components/sections/SkillsAndExperienceSection";
-// import { SocialMediaFooterSection } from "@/components/sections/SocialMediaFooterSection";
+import { SocialMediaFooterSection } from "@/components/sections/SocialMediaFooterSection";
 
 export default function Home() {
   return (
@@ -14,7 +14,7 @@ export default function Home() {
       <SkillsAndExperienceSection />
       <ProjectGallerySection />
       {/* <ContactFormSection /> */}
-      {/* <SocialMediaFooterSection /> */}
+      <SocialMediaFooterSection />
     </main>
   );
 }

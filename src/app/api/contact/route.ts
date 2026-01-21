@@ -8,8 +8,8 @@ export async function POST(request: Request) {
     const { name, email, phone, message } = await request.json();
 
     const { data, error } = await resend.emails.send({
-      from: 'Contact Form <onboarding@resend.dev>', // Utilise ton domaine vérifié
-      to: 'thairemy0@gmail.com', // Ton email où recevoir les messages
+      from: 'Contact Form <onboarding@resend.dev>',
+      to: 'thairemy0@gmail.com',
       replyTo: email,
       subject: `Nouveau message de ${name}`,
       html: `

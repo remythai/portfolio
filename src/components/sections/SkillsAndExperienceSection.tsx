@@ -126,9 +126,7 @@ const otherSkills = [
 export const SkillsAndExperienceSection = (): JSX.Element => {
     return (
         <section className="relative w-full py-16 md:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50">
-            {/* About Me Section */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
                 <div className="relative inline-block mx-auto mb-12 md:mb-16 w-full flex justify-center">
                     <div className="relative border-4 md:border-8 border-solid border-black px-8 md:px-12 py-4 md:py-6">
                         <h2 className="font-montserrat font-bold text-black text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
@@ -137,21 +135,18 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     </div>
                 </div>
 
-                {/* Description */}
                 <p className="max-w-3xl mx-auto text-center font-open-sans font-normal text-black text-sm md:text-base mb-8 md:mb-12 px-4">
                     Etudiant en 3ème année à Epitech sur le campus de Bordeaux. Curieux, créatif et déterminé, j'aime découvrir de nouveaux horizons ou bien renforcer mes compétences professionnelles mais aussi personnelles.
                 </p>
 
                 <div className="w-32 md:w-40 h-1 bg-black mx-auto mb-12 md:mb-20" aria-hidden="true" />
 
-                {/* Services Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 mb-16 md:mb-24">
                     {services.map((service, index) => (
                         <article
                             key={index}
                             className="flex flex-col items-center text-center p-6 hover:scale-105 transition-transform duration-300"
                         >
-                            {/* Icon */}
                             <div className="w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-6 flex items-center justify-center text-black relative">
                                 {service.iconImage ? (
                                     <Image
@@ -175,13 +170,10 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     ))}
                 </div>
 
-                {/* Separator */}
                 <div className="w-32 md:w-40 h-1 bg-black mx-auto mb-16 md:mb-24" aria-hidden="true" />
             </div>
 
-            {/* Skills Section */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Skills Header */}
                 <div className="relative inline-block mx-auto mb-12 md:mb-16 w-full flex justify-center">
                     <div className="relative border-4 md:border-8 border-solid border-black px-8 md:px-12 py-4 md:py-6">
                         <h2 className="font-montserrat font-bold text-black text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
@@ -190,7 +182,6 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     </div>
                 </div>
 
-                {/* Using Now Skills */}
                 <div className="mb-16 md:mb-24">
                     <h3 className="font-montserrat font-bold text-black text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
                         EN CE MOMENT :
@@ -222,7 +213,6 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     </div>
                 </div>
 
-                {/* Learning Skills */}
                 <div className="mb-16 md:mb-24">
                     <h3 className="font-montserrat font-bold text-black text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
                         EN APPRENTISSAGE :
@@ -284,7 +274,6 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                         ))}
                     </div>
                 </div>
-
             </div>
         </section>
     );

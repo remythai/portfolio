@@ -214,8 +214,8 @@ export const ProjectGallerySection = (): JSX.Element => {
               key={category.id}
               onClick={() => setActiveFilter(category.id)}
               className={`relative px-6 py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all ${activeFilter === category.id
-                  ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-white"
-                  : "text-[#7c7c7c] hover:text-white"
+                ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-white"
+                : "text-[#7c7c7c] hover:text-white"
                 }`}
               aria-pressed={activeFilter === category.id}
             >

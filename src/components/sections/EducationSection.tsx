@@ -350,10 +350,10 @@ export const EducationSection = (): JSX.Element => {
                     } pl-16 md:pl-0`}>
                     <div className="space-y-3">
                       <div className={`inline-block px-4 py-1 border-l-2 ${event.status === "current"
-                          ? "border-blue-400"
-                          : event.status === "completed"
-                            ? "border-white"
-                            : "border-white/30"
+                        ? "border-blue-400"
+                        : event.status === "completed"
+                          ? "border-white"
+                          : "border-white/30"
                         }`}>
                         <span className="font-bold text-white text-xs md:text-sm tracking-[1.6px]">
                           {event.period}

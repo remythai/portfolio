@@ -38,8 +38,8 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Tomasz Gajda - Portfolio",
-  description: "Front-end Developer / UI Designer Portfolio",
+  title: "Rémy Thai - Portfolio",
+  description: "Développeur informatique",
 };
 
 export default function RootLayout({
@@ -48,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html 
+    <html
       lang="en"
       className={`${montserrat.variable} ${raleway.variable} ${openSans.variable} ${nunito.variable} ${roboto.variable} no-scrollbar`}
     >

@@ -68,7 +68,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
       <div
         className="absolute inset-0 bg-[#303030]"
         style={{
-          clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 42% 100%)'
+          clipPath: 'polygon(60% 0, 100% 0, 100% 100%, 42% 100%)'
         }}
       />
 

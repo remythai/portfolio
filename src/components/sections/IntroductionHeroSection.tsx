@@ -65,14 +65,6 @@ export const IntroductionHeroSection = (): JSX.Element => {
           clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 42% 100%)'
         }}
       />
-
-      <div
-        className="absolute inset-0 bg-[#303030]/80 backdrop-blur-sm lg:hidden"
-        style={{
-          clipPath: 'polygon(0 70%, 100% 50%, 100% 100%, 0 100%)'
-        }}
-      />
-
       <div className="relative w-full h-full hidden lg:flex items-center px-4 lg:px-[271px] z-10">
         <div className="w-full flex flex-row items-center gap-12">
           <div ref={textRef} className="w-auto flex flex-col justify-center items-start">
@@ -135,6 +127,12 @@ export const IntroductionHeroSection = (): JSX.Element => {
             />
           </div>
         </div>
+        <div
+          className="absolute inset-0 bg-[#303030]/60 backdrop-blur-sm z-5"
+          style={{
+            clipPath: 'polygon(0 82.5%, 100% 70%, 100% 100%, 0 100%)'
+          }}
+        />
         <div ref={textRef} className="absolute bottom-6 left-6 z-10">
           <p className="font-raleway font-bold text-white text-lg mb-2">
             Bonjour, je suis

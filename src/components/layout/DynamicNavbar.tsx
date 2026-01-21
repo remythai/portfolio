@@ -10,6 +10,7 @@ gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 export const DynamicNavbar = (): JSX.Element => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const [isMobileExpanded, setIsMobileExpanded] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     const navContainerRef = useRef<HTMLDivElement>(null);
@@ -63,7 +64,6 @@ export const DynamicNavbar = (): JSX.Element => {
         blink();
     }, []);
 
-    // Eyes follow cursor
     useEffect(() => {
         if (!leftPupilRef.current || !rightPupilRef.current ||
             !leftEyeContainerRef.current || !rightEyeContainerRef.current) return;
@@ -141,7 +141,7 @@ export const DynamicNavbar = (): JSX.Element => {
     }, []);
 
     const handleMouseEnter = () => {
-        if (!isCollapsed) return;
+        if (!isCollapsed || window.innerWidth < 768) return;
         setIsHovered(true);
 
         gsap.to(expandedNavRef.current, {
@@ -155,7 +155,7 @@ export const DynamicNavbar = (): JSX.Element => {
     };
 
     const handleMouseLeave = () => {
-        if (!isCollapsed) return;
+        if (!isCollapsed || window.innerWidth < 768) return;
         setIsHovered(false);
 
         gsap.to(expandedNavRef.current, {
@@ -213,10 +213,24 @@ export const DynamicNavbar = (): JSX.Element => {
             yoyo: true,
             repeat: 1
         });
+
+        if (window.innerWidth < 768) {
+            const newState = !isMobileExpanded;
+            setIsMobileExpanded(newState);
+
+            gsap.to(expandedNavRef.current, {
+                maxWidth: newState ? 400 : 0,
+                opacity: newState ? 1 : 0,
+                paddingLeft: newState ? 20 : 0,
+                paddingRight: newState ? 20 : 0,
+                duration: 0.5,
+                ease: newState ? "power3.out" : "power2.in",
+            });
+        }
     };
 
     return (
-        <nav className="fixed top-6 right-6 z-50">
+        <nav className="fixed top-6 right-6 z-50 pr-4 md:pr-0">
             <div
                 ref={navContainerRef}
                 onMouseEnter={handleMouseEnter}
@@ -237,23 +251,59 @@ export const DynamicNavbar = (): JSX.Element => {
                 </div>
                 <div
                     ref={expandedNavRef}
-                    className="flex items-center gap-4 overflow-hidden"
+                    className="overflow-hidden"
                     style={{ maxWidth: isCollapsed ? 0 : 400, opacity: isCollapsed ? 0 : 1, paddingLeft: isCollapsed ? 0 : 20, paddingRight: isCollapsed ? 0 : 20 }}
                 >
-                    {navigationLinks.map((link, index) => (
-                        <a
-                            key={index}
-                            href={link.href}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                scrollToSection(link.href);
-                            }}
-                            className="relative font-montserrat font-medium text-black text-xs hover:text-gray-600 transition-colors cursor-pointer whitespace-nowrap group"
-                        >
-                            {link.label}
-                            <span className="absolute -bottom-1 left-0 w-0 h-px bg-black transition-all duration-300 group-hover:w-full" />
-                        </a>
-                    ))}
+                    <div className="flex flex-col gap-2 md:hidden">
+                        <div className="flex justify-center gap-3">
+                            {navigationLinks.slice(0, 3).map((link, index) => (
+                                <a
+                                    key={index}
+                                    href={link.href}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        scrollToSection(link.href);
+                                    }}
+                                    className="relative font-montserrat font-medium text-black text-xs hover:text-gray-600 transition-colors cursor-pointer whitespace-nowrap group text-center"
+                                >
+                                    {link.label}
+                                    <span className="absolute -bottom-1 left-0 w-0 h-px bg-black transition-all duration-300 group-hover:w-full" />
+                                </a>
+                            ))}
+                        </div>
+                        <div className="flex justify-center gap-3">
+                            {navigationLinks.slice(3, 5).map((link, index) => (
+                                <a
+                                    key={index + 3}
+                                    href={link.href}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        scrollToSection(link.href);
+                                    }}
+                                    className="relative font-montserrat font-medium text-black text-xs hover:text-gray-600 transition-colors cursor-pointer whitespace-nowrap group text-center"
+                                >
+                                    {link.label}
+                                    <span className="absolute -bottom-1 left-0 w-0 h-px bg-black transition-all duration-300 group-hover:w-full" />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="hidden md:flex items-center gap-4">
+                        {navigationLinks.map((link, index) => (
+                            <a
+                                key={index}
+                                href={link.href}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    scrollToSection(link.href);
+                                }}
+                                className="relative font-montserrat font-medium text-black text-xs hover:text-gray-600 transition-colors cursor-pointer whitespace-nowrap group"
+                            >
+                                {link.label}
+                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-black transition-all duration-300 group-hover:w-full" />
+                            </a>
+                        ))}
+                    </div>
                 </div>
                 <div
                     ref={rightEyeContainerRef}

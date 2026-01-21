@@ -190,8 +190,9 @@ export const ProjectGallerySection = (): JSX.Element => {
           src="/pau.jpg"
           alt="Portfolio background - Pau panoramic"
           fill
+          sizes="100vw"
           className="object-cover"
-          quality={100}
+          quality={75}
           priority
         />
 
@@ -241,8 +242,10 @@ export const ProjectGallerySection = (): JSX.Element => {
                 src={project.image}
                 alt={project.title}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
-                quality={100}
+                quality={80}
+                loading="lazy"
               />
 
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/70 transition-all duration-300" />

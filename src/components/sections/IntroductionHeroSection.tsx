@@ -1,9 +1,13 @@
 'use client'
 
-import { JSX } from "react";
+import { JSX, useEffect, useRef } from "react";
 import Image from "next/image";
+import { gsap } from "gsap";
 
 export const IntroductionHeroSection = (): JSX.Element => {
+  const imageRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+
   const navigationLinks = [
     { label: "A propos", href: "#about" },
     { label: "Compétences", href: "#skills" },
@@ -40,6 +44,25 @@ export const IntroductionHeroSection = (): JSX.Element => {
     },
   ];
 
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline();
+
+      tl.fromTo(
+        textRef.current,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, duration: 1, ease: "power3.out" }
+      ).fromTo(
+        imageRef.current,
+        { opacity: 0, scale: 0.95 },
+        { opacity: 1, scale: 1, duration: 1.2, ease: "power3.out" },
+        "-=0.7"
+      );
+    });
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <section className="relative w-full h-screen bg-[#d7d7d7] overflow-hidden">
       <div
@@ -69,7 +92,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
         </div>
 
         <button
-          className="lg:hidden p-2 text-black"
+          className="lg:hidden p-2 text-white"
           aria-label="Menu"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +103,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
 
       <div className="relative w-full h-full flex items-center px-4 lg:px-[271px] z-10">
         <div className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-          <div className="w-full lg:w-auto flex flex-col justify-center items-center lg:items-start order-2 lg:order-1">
+          <div ref={textRef} className="w-full lg:w-auto flex flex-col justify-center items-center lg:items-start order-2 lg:order-1">
             <div className="text-center lg:text-left">
               <p className="font-raleway font-bold text-black text-2xl sm:text-3xl md:text-[40px] mb-4 md:mb-6">
                 Bonjour, je suis
@@ -110,33 +133,29 @@ export const IntroductionHeroSection = (): JSX.Element => {
               </div>
             </div>
           </div>
-
-          <div className="absolute bottom-0 right-[150px] order-1 lg:order-2 hidden lg:block">
-            <div className="relative w-[900px] h-auto">
+          <div ref={imageRef} className="absolute bottom-0 right-[150px] order-1 lg:order-2 hidden lg:block">
+            <div className="relative w-[700px] h-[784px]">
               <Image
                 src="/remy.png"
                 alt="Rémy Thai professional photo"
-                width={900}
-                height={1008}
-                className="object-cover w-full h-auto"
+                fill
+                sizes="700px"
+                className="object-cover object-bottom"
                 priority
-                quality={100}
-                unoptimized={true}
+                quality={85}
               />
             </div>
           </div>
-
           <div className="relative flex-shrink-0 order-1 lg:hidden">
-            <div className="relative w-[300px] sm:w-[400px] h-auto">
+            <div className="relative w-[250px] sm:w-[350px] h-[280px] sm:h-[392px]">
               <Image
                 src="/remy.png"
                 alt="Rémy Thai professional photo"
-                width={783}
-                height={877}
-                className="object-cover w-full h-auto"
+                fill
+                sizes="(max-width: 640px) 250px, 350px"
+                className="object-cover object-top"
                 priority
-                quality={100}
-                unoptimized={true}
+                quality={85}
               />
             </div>
           </div>

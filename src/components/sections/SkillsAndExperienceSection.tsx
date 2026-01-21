@@ -154,7 +154,10 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                         alt={service.title}
                                         width={80}
                                         height={80}
+                                        sizes="(max-width: 768px) 64px, 80px"
                                         className="w-full h-full object-contain"
+                                        loading="lazy"
+                                        quality={80}
                                     />
                                 ) : (
                                     service.icon
@@ -186,7 +189,7 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     <h3 className="font-montserrat font-bold text-black text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
                         EN CE MOMENT :
                     </h3>
-                    <div className={`grid ${usingNowSkills.length <= 4 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-' + Math.min(usingNowSkills.length, 4) : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'} gap-8 md:gap-12 place-content-center`}>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 md:gap-12">
                         {usingNowSkills.map((skill, index) => (
                             <div
                                 key={index}
@@ -199,7 +202,10 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                             alt={skill.name}
                                             width={96}
                                             height={96}
+                                            sizes="(max-width: 768px) 80px, 96px"
                                             className="w-full h-full object-contain"
+                                            loading="lazy"
+                                            quality={80}
                                         />
                                     ) : (
                                         skill.icon
@@ -217,7 +223,7 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     <h3 className="font-montserrat font-bold text-black text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
                         EN APPRENTISSAGE :
                     </h3>
-                    <div className={`grid ${learningSkills.length <= 4 ? 'grid-cols-2 sm:grid-cols-' + Math.min(learningSkills.length, 3) + ' md:grid-cols-' + learningSkills.length : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'} gap-8 md:gap-12 place-content-center`}>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12">
                         {learningSkills.map((skill, index) => (
                             <div
                                 key={index}
@@ -230,7 +236,10 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                             alt={skill.name}
                                             width={96}
                                             height={96}
+                                            sizes="(max-width: 768px) 80px, 96px"
                                             className="w-full h-full object-contain"
+                                            loading="lazy"
+                                            quality={80}
                                         />
                                     ) : (
                                         skill.icon
@@ -248,7 +257,7 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     <h3 className="font-montserrat font-bold text-black text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
                         AUTRES COMPÉTENCES :
                     </h3>
-                    <div className={`grid ${otherSkills.length <= 4 ? 'grid-cols-2 sm:grid-cols-' + Math.min(otherSkills.length, 3) + ' md:grid-cols-' + otherSkills.length : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'} gap-8 md:gap-12 place-content-center`}>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12">
                         {otherSkills.map((skill, index) => (
                             <div
                                 key={index}
@@ -261,7 +270,10 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                             alt={skill.name}
                                             width={96}
                                             height={96}
+                                            sizes="(max-width: 768px) 80px, 96px"
                                             className="w-full h-full object-contain"
+                                            loading="lazy"
+                                            quality={80}
                                         />
                                     ) : (
                                         skill.icon

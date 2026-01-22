@@ -58,9 +58,9 @@ export const IntroductionHeroSection = (): JSX.Element => {
   }, []);
 
   return (
-    <section className="relative w-full h-screen bg-[#d7d7d7] overflow-hidden">
+    <section className="relative w-full h-screen bg-[#303030] overflow-hidden">
       <div
-        className="absolute inset-0 bg-[#303030] hidden lg:block"
+        className="absolute inset-0 bg-[#d7d7d7] hidden lg:block"
         style={{
           clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 42% 100%)'
         }}
@@ -69,18 +69,18 @@ export const IntroductionHeroSection = (): JSX.Element => {
         <div className="w-full flex flex-row items-center gap-12">
           <div ref={textRef} className="w-auto flex flex-col justify-center items-start">
             <div className="text-left">
-              <p className="font-raleway font-bold text-black text-[40px] mb-6">
+              <p className="font-raleway font-bold text-white text-[40px] mb-6">
                 Bonjour, je suis
               </p>
-
-              <h1 className="font-raleway font-bold text-black text-[80px] leading-tight mb-6">
+  
+              <h1 className="font-raleway font-bold text-white text-[80px] leading-tight mb-6">
                 Rémy Thai
               </h1>
-
-              <p className="font-raleway font-extrabold text-[#909090] text-[25px] mb-12">
+  
+              <p className="font-raleway font-extrabold text-[#6f6f6f] text-[25px] mb-12">
                 Développeur informatique
               </p>
-
+  
               <div className="flex gap-8 justify-start">
                 {socialIcons.map((social, index) => (
                   <a
@@ -88,7 +88,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
                     href={social.href}
                     target={social.alt !== "CV" ? "_blank" : undefined}
                     rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
-                    className="w-16 h-16 bg-[#c4c4c4] shadow-lg hover:shadow-xl hover:scale-110 hover:bg-[#b0b0b0] transition-all flex items-center justify-center text-[#303030]"
+                    className="w-16 h-16 bg-[#3b3b3b] shadow-lg hover:shadow-xl hover:scale-110 hover:bg-[#4f4f4f] transition-all flex items-center justify-center text-[#d7d7d7]"
                     aria-label={social.alt}
                   >
                     {social.icon}
@@ -97,7 +97,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
               </div>
             </div>
           </div>
-
+  
           <div className="absolute bottom-0 right-[150px]">
             <div className="relative w-[700px] h-[784px]">
               <Image
@@ -137,11 +137,11 @@ export const IntroductionHeroSection = (): JSX.Element => {
           <p className="font-raleway font-bold text-white text-lg mb-2">
             Bonjour, je suis
           </p>
-
+  
           <h1 className="font-raleway font-bold text-white text-4xl leading-tight mb-2">
             Rémy Thai
           </h1>
-
+  
           <p className="font-raleway font-extrabold text-gray-300 text-base">
             Développeur informatique
           </p>

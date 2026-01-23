@@ -1,8 +1,10 @@
 'use client'
+
 import { JSX, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
+import { useTheme } from 'next-themes';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -116,14 +118,23 @@ const projectData = [
 
 export const ProjectGallerySection = (): JSX.Element => {
   const [activeFilter, setActiveFilter] = useState("all");
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+  
   const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const projectGridRef = useRef<HTMLDivElement>(null);
+
+  const isDark = theme === 'dark';
 
   const filteredProjects = projectData.filter((project) => {
     if (activeFilter === "all") return true;
     return project.category.includes(activeFilter);
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -149,6 +160,7 @@ export const ProjectGallerySection = (): JSX.Element => {
           stagger: 0.15,
           duration: 0.8,
           ease: "power3.out",
+          clearProps: "all",
           scrollTrigger: {
             trigger: projectGridRef.current,
             start: "top 70%",
@@ -171,17 +183,23 @@ export const ProjectGallerySection = (): JSX.Element => {
           y: 0,
           duration: 0.4,
           stagger: 0.08,
-          ease: "power2.out"
+          ease: "power2.out",
+          clearProps: "all"
         }
       );
     }
   }, [filteredProjects]);
 
+  if (!mounted) {
+    return <></>;
+  }
+
   return (
     <section
       id="portfolio"
       ref={sectionRef}
-      className="relative w-full min-h-screen bg-[#303030] pb-12 md:pb-16 lg:pb-20 overflow-hidden"
+      className="relative w-full min-h-screen pb-12 md:pb-16 lg:pb-20 overflow-hidden transition-colors duration-300"
+      style={{ backgroundColor: isDark ? '#303030' : '#f5f5f5' }}
     >
       <div
         ref={titleRef}
@@ -197,10 +215,19 @@ export const ProjectGallerySection = (): JSX.Element => {
           priority
         />
 
-        <div className="absolute inset-0 bg-black/60" />
+        <div 
+          className="absolute inset-0 transition-colors duration-300" 
+          style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.4)' }}
+        />
 
-        <div className="relative z-10 border-4 md:border-8 border-solid border-white px-8 md:px-12 py-4 md:py-6">
-          <h2 className="font-montserrat font-bold text-white text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
+        <div 
+          className="relative z-10 border-4 md:border-8 border-solid px-8 md:px-12 py-4 md:py-6 transition-colors duration-300"
+          style={{ borderColor: isDark ? '#ffffff' : '#ffffff' }}
+        >
+          <h2 
+            className="font-montserrat font-bold text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px] transition-colors duration-300"
+            style={{ color: '#ffffff' }}
+          >
             PORTFOLIO
           </h2>
         </div>
@@ -215,18 +242,40 @@ export const ProjectGallerySection = (): JSX.Element => {
             <button
               key={category.id}
               onClick={() => setActiveFilter(category.id)}
-              className={`relative px-6 py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all ${activeFilter === category.id
-                ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-white"
-                : "text-[#7c7c7c] hover:text-white"
-                }`}
+              className="relative px-4 md:px-6 py-2 md:py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all"
+              style={{
+                color: activeFilter === category.id 
+                  ? (isDark ? '#ffffff' : '#000000')
+                  : (isDark ? '#7c7c7c' : '#999999')
+              }}
+              onMouseEnter={(e) => {
+                if (activeFilter !== category.id) {
+                  e.currentTarget.style.color = isDark ? '#ffffff' : '#000000';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeFilter !== category.id) {
+                  e.currentTarget.style.color = isDark ? '#7c7c7c' : '#999999';
+                }
+              }}
               aria-pressed={activeFilter === category.id}
             >
               {category.label}
+              {activeFilter === category.id && (
+                <span 
+                  className="absolute bottom-0 left-0 w-full h-0.5 transition-colors duration-300"
+                  style={{ backgroundColor: isDark ? '#ffffff' : '#000000' }}
+                />
+              )}
             </button>
           ))}
         </div>
 
-        <div className="w-full h-px bg-[#7c7c7c] mt-2" aria-hidden="true" />
+        <div 
+          className="w-full h-px mt-2 transition-colors duration-300" 
+          style={{ backgroundColor: isDark ? '#7c7c7c' : '#cccccc' }}
+          aria-hidden="true" 
+        />
       </nav>
 
       <div className="w-full">
@@ -249,7 +298,24 @@ export const ProjectGallerySection = (): JSX.Element => {
                 loading="lazy"
               />
 
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/70 transition-all duration-300" />
+              <div 
+                className="absolute inset-0 transition-all duration-300"
+                style={{ 
+                  backgroundColor: isDark 
+                    ? 'rgba(0, 0, 0, 0.4)' 
+                    : 'rgba(0, 0, 0, 0.3)' 
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = isDark 
+                    ? 'rgba(0, 0, 0, 0.7)' 
+                    : 'rgba(0, 0, 0, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = isDark 
+                    ? 'rgba(0, 0, 0, 0.4)' 
+                    : 'rgba(0, 0, 0, 0.3)';
+                }}
+              />
 
               {project.inProgress && (
                 <div className="absolute top-4 right-4 z-20 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-montserrat font-semibold tracking-wide">
@@ -306,7 +372,10 @@ export const ProjectGallerySection = (): JSX.Element => {
             </div>
           ))}
         </div>
-        <p className="text-center font-montserrat font-semibold text-white text-lg md:text-xl lg:text-2xl mt-12 md:mt-16 px-4">
+        <p 
+          className="text-center font-montserrat font-semibold text-lg md:text-xl lg:text-2xl mt-12 md:mt-16 px-4 transition-colors duration-300"
+          style={{ color: isDark ? '#ffffff' : '#000000' }}
+        >
           Et bien d'autres à venir !
         </p>
       </div>

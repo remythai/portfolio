@@ -1,12 +1,17 @@
 'use client'
 
-import { JSX, useEffect, useRef } from "react";
+import { JSX, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
+import { useTheme } from 'next-themes';
 
 export const IntroductionHeroSection = (): JSX.Element => {
   const imageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+
+  const isDark = theme === 'dark';
 
   const socialIcons = [
     {
@@ -39,29 +44,47 @@ export const IntroductionHeroSection = (): JSX.Element => {
   ];
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
 
       tl.fromTo(
         textRef.current,
         { opacity: 0, y: 50 },
-        { opacity: 1, y: 0, duration: 1, ease: "power3.out", delay: 0.3 }
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", delay: 0.1 }
       ).fromTo(
         imageRef.current,
         { opacity: 0, scale: 0.95 },
-        { opacity: 1, scale: 1, duration: 1.2, ease: "power3.out" },
-        "-=0.7"
+        { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" },
+        "-=0.5"
       );
     });
 
     return () => ctx.revert();
   }, []);
 
+
+  if (!mounted) {
+    return (
+      <section
+        className="relative w-full h-screen overflow-hidden"
+        style={{ backgroundColor: '#303030' }}
+      />
+    );
+  }
+
   return (
-    <section className="relative w-full h-screen bg-[#303030] overflow-hidden">
+    <section
+      className="relative w-full h-screen overflow-hidden transition-colors duration-300"
+      style={{ backgroundColor: isDark ? '#303030' : '#f5f5f5' }}
+    >
       <div
-        className="absolute inset-0 bg-[#d7d7d7] hidden lg:block"
+        className="absolute inset-0 hidden lg:block transition-colors duration-300"
         style={{
+          backgroundColor: isDark ? '#d7d7d7' : '#303030',
           clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 42% 100%)'
         }}
       />
@@ -69,18 +92,28 @@ export const IntroductionHeroSection = (): JSX.Element => {
         <div className="w-full flex flex-row items-center gap-12">
           <div ref={textRef} className="w-auto flex flex-col justify-center items-start">
             <div className="text-left">
-              <p className="font-raleway font-bold text-white text-[40px] mb-6">
+              <p
+                className="font-raleway font-bold text-[40px] mb-6 transition-colors duration-300"
+                style={{ color: isDark ? '#ffffff' : '#000000' }}
+              >
                 Bonjour, je suis
               </p>
-  
-              <h1 className="font-raleway font-bold text-white text-[80px] leading-tight mb-6">
+
+              <h1
+                className="font-raleway font-bold text-[80px] leading-tight mb-6 transition-colors duration-300"
+                style={{ color: isDark ? '#ffffff' : '#000000' }}
+              >
                 Rémy Thai
               </h1>
-  
-              <p className="font-raleway font-extrabold text-[#6f6f6f] text-[25px] mb-12">
+
+              <p
+                className="font-raleway font-extrabold text-[25px] mb-12 transition-colors duration-300"
+                style={{ color: isDark ? '#6f6f6f' : '#3a3a3a' }}
+              >
                 Développeur informatique
               </p>
-  
+
+
               <div className="flex gap-8 justify-start">
                 {socialIcons.map((social, index) => (
                   <a
@@ -88,7 +121,11 @@ export const IntroductionHeroSection = (): JSX.Element => {
                     href={social.href}
                     target={social.alt !== "CV" ? "_blank" : undefined}
                     rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
-                    className="w-16 h-16 bg-[#3b3b3b] shadow-lg hover:shadow-xl hover:scale-110 hover:bg-[#4f4f4f] transition-all flex items-center justify-center text-[#d7d7d7]"
+                    className="w-16 h-16 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center"
+                    style={{
+                      backgroundColor: isDark ? '#3b3b3b' : '#e5e5e5',
+                      color: isDark ? '#d7d7d7' : '#303030'
+                    }}
                     aria-label={social.alt}
                   >
                     {social.icon}
@@ -97,15 +134,15 @@ export const IntroductionHeroSection = (): JSX.Element => {
               </div>
             </div>
           </div>
-  
+
           <div className="absolute bottom-0 right-[150px]">
             <div className="relative w-[700px] h-[784px]">
               <Image
-                src="/remy.png"
+                src={isDark ? "/remy.png" : "/remy_white.png"}
                 alt="Rémy Thai professional photo"
                 fill
                 sizes="700px"
-                className="object-cover object-bottom"
+                className="object-cover object-bottom transition-opacity duration-300"
                 priority
                 quality={85}
               />
@@ -113,36 +150,47 @@ export const IntroductionHeroSection = (): JSX.Element => {
           </div>
         </div>
       </div>
+
       <div className="relative w-full h-full flex lg:hidden">
         <div ref={imageRef} className="absolute bottom-0 left-0 right-0 z-0">
           <div className="relative w-full h-[850px]">
             <Image
-              src="/remy.png"
+              src={isDark ? "/remy.png" : "/remy_white.png"}
               alt="Rémy Thai professional photo"
               fill
               sizes="100vw"
-              className="object-cover object-top"
+              className="object-cover object-top transition-opacity duration-300"
               priority
               quality={85}
             />
           </div>
         </div>
         <div
-          className="absolute inset-0 bg-[#303030]/60 backdrop-blur-sm z-5"
+          className="absolute inset-0 backdrop-blur-sm z-5 transition-colors duration-300"
           style={{
+            backgroundColor: isDark ? 'rgba(48, 48, 48, 0.6)' : 'rgba(245, 245, 245, 0.6)',
             clipPath: 'polygon(0 82.5%, 100% 70%, 100% 100%, 0 100%)'
           }}
         />
         <div ref={textRef} className="absolute bottom-6 left-6 z-10">
-          <p className="font-raleway font-bold text-white text-lg mb-2">
+          <p
+            className="font-raleway font-bold text-lg mb-2 transition-colors duration-300"
+            style={{ color: isDark ? '#ffffff' : '#303030' }}
+          >
             Bonjour, je suis
           </p>
-  
-          <h1 className="font-raleway font-bold text-white text-4xl leading-tight mb-2">
+
+          <h1
+            className="font-raleway font-bold text-4xl leading-tight mb-2 transition-colors duration-300"
+            style={{ color: isDark ? '#ffffff' : '#303030' }}
+          >
             Rémy Thai
           </h1>
-  
-          <p className="font-raleway font-extrabold text-gray-300 text-base">
+
+          <p
+            className="font-raleway font-extrabold text-base transition-colors duration-300"
+            style={{ color: isDark ? 'rgb(229, 229, 229)' : '#505050' }}
+          >
             Développeur informatique
           </p>
         </div>
@@ -153,7 +201,11 @@ export const IntroductionHeroSection = (): JSX.Element => {
               href={social.href}
               target={social.alt !== "CV" ? "_blank" : undefined}
               rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
-              className="w-12 h-12 bg-[#c4c4c4] shadow-lg hover:shadow-xl hover:scale-110 hover:bg-[#b0b0b0] transition-all flex items-center justify-center text-[#303030] rounded"
+              className="w-12 h-12 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center rounded"
+              style={{
+                backgroundColor: isDark ? '#c4c4c4' : '#505050',
+                color: isDark ? '#303030' : '#ffffff'
+              }}
               aria-label={social.alt}
             >
               {social.icon}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat, Raleway, Open_Sans, Nunito, Roboto } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 const montserrat = Montserrat({
   weight: ['400', '500', '600', '700'],
@@ -49,11 +50,14 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="fr"
       className={`${montserrat.variable} ${raleway.variable} ${openSans.variable} ${nunito.variable} ${roboto.variable} no-scrollbar`}
+      suppressHydrationWarning
     >
       <body className="antialiased no-scrollbar">
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat, Raleway, Open_Sans, Nunito, Roboto } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { Preloader } from "@/components/layout/Preloader";
 
 const montserrat = Montserrat({
   weight: ['400', '500', '600', '700'],
@@ -56,6 +57,7 @@ export default function RootLayout({
     >
       <body className="antialiased no-scrollbar">
         <ThemeProvider>
+          <Preloader />
           {children}
         </ThemeProvider>
       </body>

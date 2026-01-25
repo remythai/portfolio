@@ -8,6 +8,7 @@ import { useTheme } from 'next-themes';
 export const IntroductionHeroSection = (): JSX.Element => {
   const imageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLAnchorElement>(null);
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
 
@@ -58,6 +59,11 @@ export const IntroductionHeroSection = (): JSX.Element => {
         { opacity: 0, scale: 0.95 },
         { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" },
         "-=0.5"
+      ).fromTo(
+        buttonRef.current,
+        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out" },
+        "-=0.3"
       );
     });
 
@@ -95,7 +101,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
                 Développeur informatique
               </p>
 
-              <div className="flex gap-8 justify-start">
+              <div className="flex gap-8 justify-start mb-8">
                 {socialIcons.map((social, index) => (
                   <a
                     key={index}
@@ -109,6 +115,14 @@ export const IntroductionHeroSection = (): JSX.Element => {
                   </a>
                 ))}
               </div>
+
+              <a
+                ref={buttonRef}
+                href="#education"
+                className="inline-flex items-center justify-center w-48 h-14 font-raleway font-bold text-lg bg-[#3a3a3a] dark:bg-[#d7d7d7] text-white dark:text-[#303030] shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 rounded-lg"
+              >
+                Voir mon parcours
+              </a>
             </div>
           </div>
 
@@ -178,6 +192,16 @@ export const IntroductionHeroSection = (): JSX.Element => {
               {social.icon}
             </a>
           ))}
+          <a
+            ref={buttonRef}
+            href="#education"
+            className="w-12 h-12 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center rounded bg-[#3a3a3a] dark:bg-[#d7d7d7] text-white dark:text-[#303030]"
+            aria-label="Aller à la section éducation"
+          >
+            <svg className="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </a>
         </div>
       </div>
     </section>

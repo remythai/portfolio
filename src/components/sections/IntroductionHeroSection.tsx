@@ -66,22 +66,15 @@ export const IntroductionHeroSection = (): JSX.Element => {
 
   if (!mounted) {
     return (
-      <section
-        className="relative w-full h-screen overflow-hidden"
-        style={{ backgroundColor: 'var(--hero-bg)' }}
-      />
+      <section className="relative w-full h-screen overflow-hidden bg-[#f5f5f5] dark:bg-[#303030]" />
     );
   }
 
   return (
-    <section
-      className="relative w-full h-screen overflow-hidden transition-colors duration-300"
-      style={{ backgroundColor: 'var(--hero-bg)' }}
-    >
+    <section className="relative w-full h-screen overflow-hidden transition-colors duration-300 bg-[#f5f5f5] dark:bg-[#303030]">
       <div
-        className="absolute inset-0 hidden lg:block transition-colors duration-300"
+        className="absolute inset-0 hidden lg:block transition-colors duration-300 bg-[#303030] dark:bg-[#d7d7d7]"
         style={{
-          backgroundColor: 'var(--hero-clip-bg)',
           clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 42% 100%)'
         }}
       />
@@ -90,24 +83,15 @@ export const IntroductionHeroSection = (): JSX.Element => {
         <div className="w-full flex flex-row items-center gap-12">
           <div ref={textRef} className="w-auto flex flex-col justify-center items-start">
             <div className="text-left">
-              <p
-                className="font-raleway font-bold text-[40px] mb-6 transition-colors duration-300"
-                style={{ color: 'var(--foreground)' }}
-              >
+              <p className="font-raleway font-bold text-[40px] mb-6 transition-colors duration-300 text-black dark:text-white">
                 Bonjour, je suis
               </p>
 
-              <h1
-                className="font-raleway font-bold text-[80px] leading-tight mb-6 transition-colors duration-300"
-                style={{ color: 'var(--foreground)' }}
-              >
+              <h1 className="font-raleway font-bold text-[80px] leading-tight mb-6 transition-colors duration-300 text-black dark:text-white">
                 Rémy Thai
               </h1>
 
-              <p
-                className="font-raleway font-extrabold text-[25px] mb-12 transition-colors duration-300"
-                style={{ color: 'var(--hero-subtitle)' }}
-              >
+              <p className="font-raleway font-extrabold text-[25px] mb-12 transition-colors duration-300 text-[#3a3a3a] dark:text-[#6f6f6f]">
                 Développeur informatique
               </p>
 
@@ -118,11 +102,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
                     href={social.href}
                     target={social.alt !== "CV" ? "_blank" : undefined}
                     rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
-                    className="w-16 h-16 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center"
-                    style={{
-                      backgroundColor: 'var(--hero-social-bg)',
-                      color: 'var(--hero-social-color)'
-                    }}
+                    className="w-16 h-16 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center bg-[#e5e5e5] dark:bg-[#3b3b3b] text-[#303030] dark:text-[#d7d7d7]"
                     aria-label={social.alt}
                   >
                     {social.icon}
@@ -166,30 +146,21 @@ export const IntroductionHeroSection = (): JSX.Element => {
         <div
           className="absolute inset-0 backdrop-blur-sm z-5 transition-colors duration-300"
           style={{
-            backgroundColor: 'var(--hero-mobile-overlay)',
+            backgroundColor: 'rgba(245, 245, 245, 0.6)',
             clipPath: 'polygon(0 82.5%, 100% 70%, 100% 100%, 0 100%)'
           }}
         />
 
         <div ref={textRef} className="absolute bottom-6 left-6 z-10">
-          <p
-            className="font-raleway font-bold text-lg mb-2 transition-colors duration-300"
-            style={{ color: 'var(--hero-mobile-text)' }}
-          >
+          <p className="font-raleway font-bold text-lg mb-2 transition-colors duration-300 text-[#303030] dark:text-white">
             Bonjour, je suis
           </p>
 
-          <h1
-            className="font-raleway font-bold text-4xl leading-tight mb-2 transition-colors duration-300"
-            style={{ color: 'var(--hero-mobile-text)' }}
-          >
+          <h1 className="font-raleway font-bold text-4xl leading-tight mb-2 transition-colors duration-300 text-[#303030] dark:text-white">
             Rémy Thai
           </h1>
 
-          <p
-            className="font-raleway font-extrabold text-base transition-colors duration-300"
-            style={{ color: 'var(--hero-mobile-subtitle)' }}
-          >
+          <p className="font-raleway font-extrabold text-base transition-colors duration-300 text-[#505050] dark:text-[#e5e5e5]">
             Développeur informatique
           </p>
         </div>
@@ -201,11 +172,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
               href={social.href}
               target={social.alt !== "CV" ? "_blank" : undefined}
               rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
-              className="w-12 h-12 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center rounded"
-              style={{
-                backgroundColor: 'var(--hero-mobile-social-bg)',
-                color: 'var(--hero-mobile-social-color)'
-              }}
+              className="w-12 h-12 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center rounded bg-[#505050] dark:bg-[#c4c4c4] text-white dark:text-[#303030]"
               aria-label={social.alt}
             >
               {social.icon}

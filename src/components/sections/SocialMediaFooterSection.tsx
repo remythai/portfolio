@@ -1,10 +1,13 @@
 'use client'
 
+
 import { JSX, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 
+
 export const SocialMediaFooterSection = (): JSX.Element => {
   const arrowRef = useRef<SVGSVGElement>(null);
+
 
   const socialMediaLinks = [
     {
@@ -36,15 +39,18 @@ export const SocialMediaFooterSection = (): JSX.Element => {
     },
   ];
 
+
   const handleBackToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
 
   useEffect(() => {
     if (arrowRef.current) {
       gsap.set(arrowRef.current, {
         transformOrigin: "center center"
       });
+
 
       gsap.fromTo(
         arrowRef.current,
@@ -60,6 +66,7 @@ export const SocialMediaFooterSection = (): JSX.Element => {
     }
   }, []);
 
+
   const handleHover = (isEntering: boolean) => {
     if (arrowRef.current) {
       gsap.to(arrowRef.current, {
@@ -70,15 +77,16 @@ export const SocialMediaFooterSection = (): JSX.Element => {
     }
   };
 
+
   return (
-    <footer className="relative w-full bg-[#1a1a1a] py-12 md:py-16 lg:py-20">
+    <footer className="relative w-full transition-colors duration-300 bg-[#1a1a1a] dark:bg-black py-12 md:py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center mb-8 md:mb-12">
           <button
             onClick={handleBackToTop}
             onMouseEnter={() => handleHover(true)}
             onMouseLeave={() => handleHover(false)}
-            className="group flex items-center gap-2 font-montserrat font-bold text-white text-sm md:text-base tracking-wider hover:text-gray-300 transition-colors bg-transparent border-0 cursor-pointer"
+            className="group flex items-center gap-2 font-montserrat font-bold transition-colors duration-300 text-white hover:text-gray-300 dark:hover:text-gray-400 text-sm md:text-base tracking-wider bg-transparent border-0 cursor-pointer"
             aria-label="Back to top"
           >
             Retourner en haut de la page
@@ -94,6 +102,7 @@ export const SocialMediaFooterSection = (): JSX.Element => {
           </button>
         </div>
 
+
         <nav
           className="flex justify-center gap-6 md:gap-8 mb-8 md:mb-12"
           aria-label="Social media links"
@@ -105,12 +114,13 @@ export const SocialMediaFooterSection = (): JSX.Element => {
               target={link.alt !== "CV" ? "_blank" : undefined}
               rel={link.alt !== "CV" ? "noopener noreferrer" : undefined}
               aria-label={link.alt}
-              className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-[#303030] hover:bg-[#404040] transition-all hover:scale-110 text-white"
+              className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center transition-all duration-300 hover:scale-110 bg-[#303030] dark:bg-[#0a0a0a] hover:bg-[#404040] dark:hover:bg-[#1a1a1a] text-white"
             >
               {link.icon}
             </a>
           ))}
         </nav>
+
 
         <p className="text-center font-nunito text-white text-sm md:text-base lg:text-lg">
           <span className="font-bold">@2026 Thai Rémy </span>

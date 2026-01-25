@@ -1,5 +1,10 @@
+'use client'
+
 import { JSX } from "react";
 import Image from "next/image";
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
+
 
 const services = [
     {
@@ -27,8 +32,10 @@ const services = [
         description:
             "Amateur de cuisine créative, j'aime expérimenter de nouvelles recettes et techniques culinaires. Cette passion développe ma créativité, mon attention aux détails et ma capacité à suivre des processus méthodiques.",
         iconImage: "/wok.png",
+        iconImageDark: "/wok_white.png",
     },
 ];
+
 
 const usingNowSkills = [
     {
@@ -74,12 +81,13 @@ const usingNowSkills = [
     {
         name: "GITHUB",
         icon: (
-            <svg className="w-full h-full" fill="#181717" viewBox="0 0 24 24">
+            <svg className="w-full h-full transition-colors duration-300 fill-[#181717] dark:fill-white" viewBox="0 0 24 24">
                 <path d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z" />
             </svg>
         )
     },
 ];
+
 
 const learningSkills = [
     {
@@ -104,6 +112,7 @@ const learningSkills = [
     },
 ];
 
+
 const otherSkills = [
     {
         name: "ANGLAIS\n(NIVEAU C1)",
@@ -112,6 +121,7 @@ const otherSkills = [
     {
         name: "ASSOCIATIF\n(BDE, ASSOS)",
         iconImage: "/association.png",
+        iconImageDark: "/association_white.png",
     },
     {
         name: "ÉCOLOGIE",
@@ -123,29 +133,50 @@ const otherSkills = [
     },
 ];
 
+
 export const SkillsAndExperienceSection = (): JSX.Element => {
+    const [mounted, setMounted] = useState(false);
+    const { theme } = useTheme();
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <></>;
+    }
+
+    const isDark = theme === 'dark';
+
     return (
         <section
             id="about"
-            className="relative w-full py-16 md:py-24 lg:py-32"
-            style={{
-                background: 'radial-gradient(50% 50% at 50% 50%, rgba(26, 21, 21, 0.00) 0%, rgba(1, 1, 1, 0.16) 100%), #FFF'
-            }}
+            className="relative w-full py-16 md:py-24 lg:py-32 transition-colors duration-300 bg-white dark:bg-[#1a1a1a]"
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div 
+                className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+                style={{
+                    background: 'radial-gradient(50% 50% at 50% 50%, rgba(26, 21, 21, 0.00) 0%, rgba(1, 1, 1, 0.16) 100%)'
+                }}
+            />
+
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative inline-block mx-auto mb-12 md:mb-16 w-full flex justify-center">
-                    <div className="relative border-4 md:border-8 border-solid border-black px-8 md:px-12 py-4 md:py-6">
-                        <h2 className="font-montserrat font-bold text-black text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
+                    <div className="relative border-4 md:border-8 transition-colors duration-300 border-black dark:border-white px-8 md:px-12 py-4 md:py-6">
+                        <h2 className="font-montserrat font-bold transition-colors duration-300 text-black dark:text-white text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
                             A PROPOS
                         </h2>
                     </div>
                 </div>
 
-                <p className="max-w-3xl mx-auto text-center font-open-sans font-normal text-black text-sm md:text-base mb-8 md:mb-12 px-4">
+
+                <p className="max-w-3xl mx-auto text-center font-open-sans font-normal transition-colors duration-300 text-black dark:text-white text-sm md:text-base mb-8 md:mb-12 px-4">
                     Etudiant en 3ème année à Epitech sur le campus de Bordeaux. Curieux, créatif et déterminé, j'aime découvrir de nouveaux horizons ou bien renforcer mes compétences professionnelles mais aussi personnelles.
                 </p>
 
-                <div className="w-32 md:w-40 h-1 bg-black mx-auto mb-12 md:mb-20" aria-hidden="true" />
+
+                <div className="w-32 md:w-40 h-1 transition-colors duration-300 bg-black dark:bg-white mx-auto mb-12 md:mb-20" aria-hidden="true" />
+
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 mb-16 md:mb-24">
                     {services.map((service, index) => (
@@ -153,15 +184,15 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                             key={index}
                             className="flex flex-col items-center text-center p-6 hover:scale-105 transition-transform duration-300"
                         >
-                            <div className="w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-6 flex items-center justify-center text-black relative">
+                            <div className="w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-6 flex items-center justify-center transition-colors duration-300 text-black dark:text-white relative">
                                 {service.iconImage ? (
                                     <Image
-                                        src={service.iconImage}
+                                        src={isDark && service.iconImageDark ? service.iconImageDark : service.iconImage}
                                         alt={service.title}
                                         width={80}
                                         height={80}
                                         sizes="(max-width: 768px) 64px, 80px"
-                                        className="w-full h-full object-contain"
+                                        className="w-full h-full object-contain transition-opacity duration-300"
                                         loading="lazy"
                                         quality={80}
                                     />
@@ -169,30 +200,33 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                     service.icon
                                 )}
                             </div>
-                            <h3 className="font-montserrat font-bold text-black text-lg md:text-xl lg:text-2xl tracking-wider mb-4">
+                            <h3 className="font-montserrat font-bold transition-colors duration-300 text-black dark:text-white text-lg md:text-xl lg:text-2xl tracking-wider mb-4">
                                 {service.title}
                             </h3>
-                            <p className="font-open-sans font-light text-black text-sm md:text-base text-justify max-w-md">
+                            <p className="font-open-sans font-light transition-colors duration-300 text-black dark:text-white text-sm md:text-base text-justify max-w-md">
                                 {service.description}
                             </p>
                         </article>
                     ))}
                 </div>
 
-                <div className="w-32 md:w-40 h-1 bg-black mx-auto mb-16 md:mb-24" aria-hidden="true" />
+
+                <div className="w-32 md:w-40 h-1 transition-colors duration-300 bg-black dark:bg-white mx-auto mb-16 md:mb-24" aria-hidden="true" />
             </div>
 
-            <div id="skills" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div id="skills" className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative inline-block mx-auto mb-12 md:mb-16 w-full flex justify-center">
-                    <div className="relative border-4 md:border-8 border-solid border-black px-8 md:px-12 py-4 md:py-6">
-                        <h2 className="font-montserrat font-bold text-black text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
+                    <div className="relative border-4 md:border-8 transition-colors duration-300 border-black dark:border-white px-8 md:px-12 py-4 md:py-6">
+                        <h2 className="font-montserrat font-bold transition-colors duration-300 text-black dark:text-white text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
                             COMPÉTENCES
                         </h2>
                     </div>
                 </div>
 
+
                 <div className="mb-16 md:mb-24">
-                    <h3 className="font-montserrat font-bold text-black text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
+                    <h3 className="font-montserrat font-bold transition-colors duration-300 text-black dark:text-white text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
                         EN CE MOMENT :
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 md:gap-12">
@@ -217,7 +251,7 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                         skill.icon
                                     )}
                                 </div>
-                                <p className="font-montserrat font-normal text-black text-sm md:text-base lg:text-lg text-center tracking-wider">
+                                <p className="font-montserrat font-normal transition-colors duration-300 text-black dark:text-white text-sm md:text-base lg:text-lg text-center tracking-wider">
                                     {skill.name}
                                 </p>
                             </div>
@@ -225,8 +259,9 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     </div>
                 </div>
 
+
                 <div className="mb-16 md:mb-24">
-                    <h3 className="font-montserrat font-bold text-black text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
+                    <h3 className="font-montserrat font-bold transition-colors duration-300 text-black dark:text-white text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
                         EN APPRENTISSAGE :
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12">
@@ -251,7 +286,7 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                         skill.icon
                                     )}
                                 </div>
-                                <p className="font-montserrat font-normal text-black text-sm md:text-base lg:text-lg text-center tracking-wider">
+                                <p className="font-montserrat font-normal transition-colors duration-300 text-black dark:text-white text-sm md:text-base lg:text-lg text-center tracking-wider">
                                     {skill.name}
                                 </p>
                             </div>
@@ -259,8 +294,9 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                     </div>
                 </div>
 
+
                 <div>
-                    <h3 className="font-montserrat font-bold text-black text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
+                    <h3 className="font-montserrat font-bold transition-colors duration-300 text-black dark:text-white text-xl md:text-2xl lg:text-3xl tracking-wider text-center mb-8 md:mb-12">
                         AUTRES COMPÉTENCES :
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12">
@@ -272,12 +308,12 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                 <div className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center mb-4 p-2">
                                     {skill.iconImage ? (
                                         <Image
-                                            src={skill.iconImage}
+                                            src={isDark && skill.iconImageDark ? skill.iconImageDark : skill.iconImage}
                                             alt={skill.name}
                                             width={96}
                                             height={96}
                                             sizes="(max-width: 768px) 80px, 96px"
-                                            className="w-full h-full object-contain"
+                                            className="w-full h-full object-contain transition-opacity duration-300"
                                             loading="lazy"
                                             quality={80}
                                         />
@@ -285,7 +321,7 @@ export const SkillsAndExperienceSection = (): JSX.Element => {
                                         skill.icon
                                     )}
                                 </div>
-                                <p className="font-montserrat font-normal text-black text-sm md:text-base lg:text-lg text-center tracking-wider whitespace-pre-line">
+                                <p className="font-montserrat font-normal transition-colors duration-300 text-black dark:text-white text-sm md:text-base lg:text-lg text-center tracking-wider whitespace-pre-line">
                                     {skill.name}
                                 </p>
                             </div>

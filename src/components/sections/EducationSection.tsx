@@ -3,9 +3,7 @@ import { JSX, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-
 gsap.registerPlugin(ScrollTrigger);
-
 
 interface TimelineEvent {
   year: string;
@@ -21,16 +19,13 @@ interface TimelineEvent {
   status: "completed" | "current" | "upcoming";
 }
 
-
 export const EducationSection = (): JSX.Element => {
   const sectionRef = useRef<HTMLElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const eventsRef = useRef<(HTMLDivElement | null)[]>([]);
   const detailsRef = useRef<(HTMLDivElement | null)[]>([]);
 
-
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-
 
   const timelineEvents: TimelineEvent[] = [
     {
@@ -117,11 +112,9 @@ export const EducationSection = (): JSX.Element => {
     }
   ];
 
-
   const toggleDetails = (index: number) => {
     const detail = detailsRef.current[index];
     if (!detail) return;
-
 
     if (expandedIndex === index) {
       gsap.to(detail, {
@@ -141,12 +134,10 @@ export const EducationSection = (): JSX.Element => {
         });
       }
 
-
       setExpandedIndex(index);
       gsap.set(detail, { height: "auto", opacity: 0 });
       const autoHeight = detail.offsetHeight;
       gsap.set(detail, { height: 0 });
-
 
       gsap.to(detail, {
         height: autoHeight,
@@ -154,7 +145,6 @@ export const EducationSection = (): JSX.Element => {
         duration: 0.6,
         ease: "power2.out"
       });
-
 
       const content = detail.querySelector('.detail-content') as HTMLElement;
       if (content) {
@@ -166,11 +156,9 @@ export const EducationSection = (): JSX.Element => {
     }
   };
 
-
   const handleLinkHover = (linkElement: HTMLAnchorElement, isEntering: boolean) => {
     const underline = linkElement.querySelector('.link-underline');
     const icon = linkElement.querySelector('.link-icon');
-
 
     if (isEntering) {
       gsap.to(underline, {
@@ -199,7 +187,6 @@ export const EducationSection = (): JSX.Element => {
     }
   };
 
-
   const getLinkIcon = (type?: string) => {
     switch (type) {
       case 'github':
@@ -217,10 +204,8 @@ export const EducationSection = (): JSX.Element => {
     }
   };
 
-
   useEffect(() => {
     if (!sectionRef.current) return;
-
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -242,14 +227,11 @@ export const EducationSection = (): JSX.Element => {
         }
       );
 
-
       eventsRef.current.forEach((event, index) => {
         if (!event) return;
 
-
         const isLeft = index % 2 === 0;
         const isMobile = window.innerWidth < 768;
-
 
         gsap.fromTo(
           event,
@@ -273,7 +255,6 @@ export const EducationSection = (): JSX.Element => {
             }
           }
         );
-
 
         const dot = event.querySelector('.timeline-dot');
         if (dot) {
@@ -299,69 +280,60 @@ export const EducationSection = (): JSX.Element => {
       });
     }, sectionRef);
 
-
     return () => ctx.revert();
   }, []);
 
-
-  const getStatusColor = (status: string) => {
+  const getStatusClasses = (status: string) => {
     switch (status) {
       case "completed":
-        return "border-2";
+        return "bg-white dark:bg-white border-2 border-black dark:border-white";
       case "current":
         return "bg-blue-400 border-blue-400 border-2 animate-pulse";
       case "upcoming":
-        return "border-2 opacity-30";
+        return "bg-white/30 dark:bg-white/30 border-2 border-black/30 dark:border-white/30";
       default:
-        return "border-2";
+        return "bg-white dark:bg-white border-2 border-black dark:border-white";
     }
   };
 
+  const getBorderClass = (status: string) => {
+    if (status === "current") return "border-blue-400";
+    if (status === "completed") return "border-black dark:border-white";
+    return "border-black/30 dark:border-white/30";
+  };
 
   return (
     <section
       id="education"
       ref={sectionRef}
-      className="relative w-full min-h-screen py-16 md:py-24 overflow-x-hidden transition-colors duration-300"
-      style={{ backgroundColor: 'var(--education-bg)' }}
+      className="relative w-full min-h-screen py-16 md:py-24 overflow-x-hidden transition-colors duration-300 bg-[#f5f5f5] dark:bg-[#303030]"
     >
       <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-24 max-w-7xl">
         <div className="mb-16 md:mb-24">
-          <h2 
-            className="font-bold text-2xl md:text-3xl tracking-[5.56px] mb-6 transition-colors duration-300"
-            style={{ color: 'var(--education-title)' }}
-          >
+          <h2 className="font-bold text-2xl md:text-3xl tracking-[5.56px] mb-6 transition-colors duration-300 text-black dark:text-white">
             MON PARCOURS
           </h2>
-          <p 
-            className="font-normal text-sm md:text-[15px] leading-relaxed max-w-2xl transition-colors duration-300"
-            style={{ color: 'var(--education-text)' }}
-          >
+          <p className="font-normal text-sm md:text-[15px] leading-relaxed max-w-2xl transition-colors duration-300 text-black dark:text-white">
             De mes études secondaires à ma formation d'ingénieur chez Epitech,
             découvrez les étapes clés qui ont façonné mon parcours professionnel.
           </p>
         </div>
 
-
         <div className="relative">
-          <div 
-            className="absolute left-1/2 top-0 w-0.5 h-full -translate-x-1/2 hidden md:block transition-colors duration-300"
-            style={{ backgroundColor: 'var(--education-timeline-bg)' }}
-          >
+          {/* Timeline line - Desktop */}
+          <div className="absolute left-1/2 top-0 w-0.5 h-full -translate-x-1/2 hidden md:block transition-colors duration-300 bg-black/20 dark:bg-white/20">
             <div
               ref={lineRef}
-              className="absolute top-0 left-0 w-full origin-top transition-colors duration-300"
-              style={{ height: "0%", backgroundColor: 'var(--education-timeline-active)' }}
+              className="absolute top-0 left-0 w-full origin-top transition-colors duration-300 bg-black dark:bg-white"
+              style={{ height: "0%" }}
             />
           </div>
 
-          <div 
-            className="absolute left-2 top-0 w-0.5 h-full md:hidden transition-colors duration-300"
-            style={{ backgroundColor: 'var(--education-timeline-bg)' }}
-          >
+          {/* Timeline line - Mobile */}
+          <div className="absolute left-2 top-0 w-0.5 h-full md:hidden transition-colors duration-300 bg-black/20 dark:bg-white/20">
             <div
-              className="absolute top-0 left-0 w-full origin-top transition-colors duration-300"
-              style={{ height: "100%", backgroundColor: 'var(--education-timeline-active)' }}
+              className="absolute top-0 left-0 w-full origin-top transition-colors duration-300 bg-black dark:bg-white"
+              style={{ height: "100%" }}
             />
           </div>
 
@@ -369,7 +341,6 @@ export const EducationSection = (): JSX.Element => {
             {timelineEvents.map((event, index) => {
               const isLeft = index % 2 === 0;
               const isExpanded = expandedIndex === index;
-
 
               return (
                 <div
@@ -379,60 +350,28 @@ export const EducationSection = (): JSX.Element => {
                 >
                   <div className={`w-full md:w-[calc(50%-2rem)] ${isLeft ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'} pl-12 md:pl-0`}>
                     <div className="space-y-3">
-                      <div 
-                        className={`inline-block px-4 py-1 border-l-2 transition-colors duration-300 ${
-                          event.status === "current"
-                            ? "border-blue-400"
-                            : ""
-                        }`}
-                        style={{
-                          borderColor: event.status === "current" ? undefined : (
-                            event.status === "completed" 
-                              ? 'var(--education-title)' 
-                              : 'var(--education-border-inactive)'
-                          )
-                        }}
-                      >
-                        <span 
-                          className="font-bold text-xs md:text-sm tracking-[1.6px] transition-colors duration-300"
-                          style={{ color: 'var(--education-title)' }}
-                        >
+                      <div className={`inline-block px-4 py-1 border-l-2 transition-colors duration-300 ${getBorderClass(event.status)}`}>
+                        <span className="font-bold text-xs md:text-sm tracking-[1.6px] transition-colors duration-300 text-black dark:text-white">
                           {event.period}
                         </span>
                       </div>
 
-
-                      <h3 
-                        className="font-bold text-lg md:text-xl transition-colors duration-300"
-                        style={{ color: 'var(--education-title)' }}
-                      >
+                      <h3 className="font-bold text-lg md:text-xl transition-colors duration-300 text-black dark:text-white">
                         {event.title}
                       </h3>
 
-
-                      <p 
-                        className="font-normal text-sm md:text-[15px] leading-relaxed transition-colors duration-300"
-                        style={{ color: 'var(--education-text-secondary)' }}
-                      >
+                      <p className="font-normal text-sm md:text-[15px] leading-relaxed transition-colors duration-300 text-black/80 dark:text-white/80">
                         {event.description}
                       </p>
 
-
-                      <p 
-                        className="font-semibold text-xs transition-colors duration-300"
-                        style={{ color: 'var(--education-text-muted)' }}
-                      >
+                      <p className="font-semibold text-xs transition-colors duration-300 text-black/60 dark:text-white/60">
                         {event.year}
                       </p>
-
 
                       <div className={`flex ${isLeft ? 'md:justify-end' : 'md:justify-start'}`}>
                         <button
                           onClick={() => toggleDetails(index)}
-                          className="group flex items-center gap-2 mt-4 transition-colors duration-300"
-                          style={{ color: 'var(--education-button-text)' }}
-                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--education-title)'}
-                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--education-button-text)'}
+                          className="group flex items-center gap-2 mt-4 transition-colors duration-300 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
                         >
                           <span className="text-sm font-medium">
                             {isExpanded ? 'Voir moins' : 'En savoir plus'}
@@ -448,23 +387,15 @@ export const EducationSection = (): JSX.Element => {
                         </button>
                       </div>
 
-
                       <div
                         ref={(el) => { detailsRef.current[index] = el; }}
                         className="overflow-hidden"
                         style={{ height: 0, opacity: 0 }}
                       >
-                        <div 
-                          className="detail-content mt-4 pt-4 border-t transition-colors duration-300"
-                          style={{ borderColor: 'var(--education-border)' }}
-                        >
-                          <p 
-                            className="font-normal text-sm md:text-[15px] leading-relaxed mb-4 transition-colors duration-300"
-                            style={{ color: 'var(--education-detail-text)' }}
-                          >
+                        <div className="detail-content mt-4 pt-4 border-t transition-colors duration-300 border-black/20 dark:border-white/20">
+                          <p className="font-normal text-sm md:text-[15px] leading-relaxed mb-4 transition-colors duration-300 text-black/70 dark:text-white/70">
                             {event.detailedDescription}
                           </p>
-
 
                           {event.links && event.links.length > 0 && (
                             <div className={`flex flex-wrap gap-3 ${isLeft ? 'md:justify-end' : 'md:justify-start'}`}>
@@ -474,26 +405,14 @@ export const EducationSection = (): JSX.Element => {
                                   href={link.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="group relative inline-flex items-center gap-2 px-4 py-2 border rounded-lg transition-all duration-300"
-                                  style={{
-                                    backgroundColor: 'var(--education-link-bg)',
-                                    borderColor: 'var(--education-border)'
-                                  }}
-                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--education-link-bg-hover)'}
-                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--education-link-bg)'}
-                                  onMouseMove={(e) => handleLinkHover(e.currentTarget, true)}
-                                  onMouseOut={(e) => handleLinkHover(e.currentTarget, false)}
+                                  className="group relative inline-flex items-center gap-2 px-4 py-2 border rounded-lg transition-all duration-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border-black/20 dark:border-white/20"
+                                  onMouseEnter={(e) => handleLinkHover(e.currentTarget, true)}
+                                  onMouseLeave={(e) => handleLinkHover(e.currentTarget, false)}
                                 >
-                                  <span 
-                                    className="link-icon transition-colors duration-300"
-                                    style={{ color: 'var(--education-link-text)' }}
-                                  >
+                                  <span className="link-icon transition-colors duration-300 text-black/70 dark:text-white/70 group-hover:text-black dark:group-hover:text-white">
                                     {getLinkIcon(link.type)}
                                   </span>
-                                  <span 
-                                    className="text-sm font-medium transition-colors duration-300"
-                                    style={{ color: 'var(--education-link-text)' }}
-                                  >
+                                  <span className="text-sm font-medium transition-colors duration-300 text-black/70 dark:text-white/70 group-hover:text-black dark:group-hover:text-white">
                                     {link.label}
                                   </span>
                                   <span className="link-underline absolute bottom-0 left-0 w-full h-0.5 bg-blue-400 origin-left scale-x-0" />
@@ -507,13 +426,7 @@ export const EducationSection = (): JSX.Element => {
                   </div>
 
                   <div className="absolute left-2 md:left-1/2 md:-translate-x-1/2 -translate-x-1/2 timeline-dot">
-                    <div 
-                      className={`w-4 h-4 rounded-full transition-colors duration-300 ${getStatusColor(event.status)}`}
-                      style={{
-                        backgroundColor: event.status === "current" ? undefined : 'var(--education-dot-bg)',
-                        borderColor: event.status === "current" ? undefined : 'var(--education-dot-border)'
-                      }}
-                    />
+                    <div className={`w-4 h-4 rounded-full transition-colors duration-300 ${getStatusClasses(event.status)}`} />
                     {event.status === "current" && (
                       <div className="absolute inset-0 w-4 h-4 rounded-full bg-blue-400 opacity-30 animate-ping" />
                     )}

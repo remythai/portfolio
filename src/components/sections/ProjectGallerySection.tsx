@@ -1,18 +1,21 @@
 'use client'
 
+
 import { JSX, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
-import { useTheme } from 'next-themes';
+
 
 gsap.registerPlugin(ScrollTrigger);
+
 
 const filterCategories = [
   { id: "all", label: "TOUS" },
   { id: "school", label: "EPITECH" },
   { id: "other", label: "AUTRES" },
 ];
+
 
 const projectData = [
   {
@@ -116,28 +119,30 @@ const projectData = [
   },
 ];
 
+
 export const ProjectGallerySection = (): JSX.Element => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [mounted, setMounted] = useState(false);
-  const { theme } = useTheme();
-  
+
   const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const projectGridRef = useRef<HTMLDivElement>(null);
 
-  const isDark = theme === 'dark';
 
   const filteredProjects = projectData.filter((project) => {
     if (activeFilter === "all") return true;
     return project.category.includes(activeFilter);
   });
 
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
+
   useEffect(() => {
     if (!sectionRef.current) return;
+
 
     const ctx = gsap.context(() => {
       gsap.from(titleRef.current, {
@@ -150,6 +155,7 @@ export const ProjectGallerySection = (): JSX.Element => {
           start: "top 80%",
         }
       });
+
 
       const projectCards = projectGridRef.current?.querySelectorAll('.project-card');
       if (projectCards) {
@@ -169,8 +175,10 @@ export const ProjectGallerySection = (): JSX.Element => {
       }
     }, sectionRef);
 
+
     return () => ctx.revert();
   }, []);
+
 
   useEffect(() => {
     const projectCards = projectGridRef.current?.querySelectorAll('.project-card');
@@ -190,16 +198,17 @@ export const ProjectGallerySection = (): JSX.Element => {
     }
   }, [filteredProjects]);
 
+
   if (!mounted) {
     return <></>;
   }
+
 
   return (
     <section
       id="portfolio"
       ref={sectionRef}
-      className="relative w-full min-h-screen pb-12 md:pb-16 lg:pb-20 overflow-hidden transition-colors duration-300"
-      style={{ backgroundColor: isDark ? '#303030' : '#f5f5f5' }}
+      className="relative w-full min-h-screen pb-12 md:pb-16 lg:pb-20 overflow-hidden transition-colors duration-300 bg-[#f5f5f5] dark:bg-[#303030]"
     >
       <div
         ref={titleRef}
@@ -215,23 +224,17 @@ export const ProjectGallerySection = (): JSX.Element => {
           priority
         />
 
-        <div 
-          className="absolute inset-0 transition-colors duration-300" 
-          style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.4)' }}
-        />
 
-        <div 
-          className="relative z-10 border-4 md:border-8 border-solid px-8 md:px-12 py-4 md:py-6 transition-colors duration-300"
-          style={{ borderColor: isDark ? '#ffffff' : '#ffffff' }}
-        >
-          <h2 
-            className="font-montserrat font-bold text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px] transition-colors duration-300"
-            style={{ color: '#ffffff' }}
-          >
+        <div className="absolute inset-0 transition-colors duration-300 bg-black/40 dark:bg-black/60" />
+
+
+        <div className="relative z-10 border-4 md:border-8 border-solid border-white px-8 md:px-12 py-4 md:py-6">
+          <h2 className="font-montserrat font-bold text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px] text-white">
             PORTFOLIO
           </h2>
         </div>
       </div>
+
 
       <nav
         className="max-w-2xl mx-auto px-4 mb-8 md:mb-12"
@@ -242,41 +245,25 @@ export const ProjectGallerySection = (): JSX.Element => {
             <button
               key={category.id}
               onClick={() => setActiveFilter(category.id)}
-              className="relative px-4 md:px-6 py-2 md:py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all"
-              style={{
-                color: activeFilter === category.id 
-                  ? (isDark ? '#ffffff' : '#000000')
-                  : (isDark ? '#7c7c7c' : '#999999')
-              }}
-              onMouseEnter={(e) => {
-                if (activeFilter !== category.id) {
-                  e.currentTarget.style.color = isDark ? '#ffffff' : '#000000';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeFilter !== category.id) {
-                  e.currentTarget.style.color = isDark ? '#7c7c7c' : '#999999';
-                }
-              }}
+              className={`relative px-4 md:px-6 py-2 md:py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 ${
+                activeFilter === category.id
+                  ? 'text-black dark:text-white'
+                  : 'text-[#999999] dark:text-[#7c7c7c] hover:text-black dark:hover:text-white'
+              }`}
               aria-pressed={activeFilter === category.id}
             >
               {category.label}
               {activeFilter === category.id && (
-                <span 
-                  className="absolute bottom-0 left-0 w-full h-0.5 transition-colors duration-300"
-                  style={{ backgroundColor: isDark ? '#ffffff' : '#000000' }}
-                />
+                <span className="absolute bottom-0 left-0 w-full h-0.5 transition-colors duration-300 bg-black dark:bg-white" />
               )}
             </button>
           ))}
         </div>
 
-        <div 
-          className="w-full h-px mt-2 transition-colors duration-300" 
-          style={{ backgroundColor: isDark ? '#7c7c7c' : '#cccccc' }}
-          aria-hidden="true" 
-        />
+
+        <div className="w-full h-px mt-2 transition-colors duration-300 bg-[#cccccc] dark:bg-[#7c7c7c]" aria-hidden="true" />
       </nav>
+
 
       <div className="w-full">
         <div
@@ -298,30 +285,16 @@ export const ProjectGallerySection = (): JSX.Element => {
                 loading="lazy"
               />
 
-              <div 
-                className="absolute inset-0 transition-all duration-300"
-                style={{ 
-                  backgroundColor: isDark 
-                    ? 'rgba(0, 0, 0, 0.4)' 
-                    : 'rgba(0, 0, 0, 0.3)' 
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = isDark 
-                    ? 'rgba(0, 0, 0, 0.7)' 
-                    : 'rgba(0, 0, 0, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = isDark 
-                    ? 'rgba(0, 0, 0, 0.4)' 
-                    : 'rgba(0, 0, 0, 0.3)';
-                }}
-              />
+
+              <div className="absolute inset-0 transition-all duration-300 bg-black/30 dark:bg-black/40 group-hover:bg-black/60 dark:group-hover:bg-black/70" />
+
 
               {project.inProgress && (
                 <div className="absolute top-4 right-4 z-20 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-montserrat font-semibold tracking-wide">
                   EN DÉVELOPPEMENT
                 </div>
               )}
+
 
               <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
                 {project.tags && (
@@ -330,13 +303,16 @@ export const ProjectGallerySection = (): JSX.Element => {
                   </p>
                 )}
 
+
                 <h3 className="font-montserrat font-bold text-white text-xl md:text-2xl mb-3 tracking-wider">
                   {project.title}
                 </h3>
 
+
                 <p className="font-montserrat font-medium text-white/90 text-xs md:text-sm leading-relaxed mb-6 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   {project.description}
                 </p>
+
 
                 <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   {project.githubLink && (
@@ -353,6 +329,7 @@ export const ProjectGallerySection = (): JSX.Element => {
                       <div className="w-px h-6 bg-white/50" aria-hidden="true" />
                     </>
                   )}
+
 
                   {project.demoLink && (
                     <>
@@ -372,10 +349,7 @@ export const ProjectGallerySection = (): JSX.Element => {
             </div>
           ))}
         </div>
-        <p 
-          className="text-center font-montserrat font-semibold text-lg md:text-xl lg:text-2xl mt-12 md:mt-16 px-4 transition-colors duration-300"
-          style={{ color: isDark ? '#ffffff' : '#000000' }}
-        >
+        <p className="text-center font-montserrat font-semibold text-lg md:text-xl lg:text-2xl mt-12 md:mt-16 px-4 transition-colors duration-300 text-black dark:text-white">
           Et bien d'autres à venir !
         </p>
       </div>

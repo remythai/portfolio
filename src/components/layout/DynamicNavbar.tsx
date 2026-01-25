@@ -5,7 +5,6 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { useTheme } from 'next-themes';
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -15,7 +14,6 @@ export const DynamicNavbar = (): JSX.Element => {
     const [isMobileExpanded, setIsMobileExpanded] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [mounted, setMounted] = useState(false);
-    const { theme } = useTheme();
 
     const navContainerRef = useRef<HTMLDivElement>(null);
     const expandedNavRef = useRef<HTMLDivElement>(null);
@@ -55,10 +53,17 @@ export const DynamicNavbar = (): JSX.Element => {
 
     useEffect(() => {
         const blink = () => {
+            if (!leftPupilRef.current || !rightPupilRef.current) return;
+
+            const leftParent = leftPupilRef.current.parentElement;
+            const rightParent = rightPupilRef.current.parentElement;
+
+            if (!leftParent || !rightParent) return;
+
             const delay = 3000 + Math.random() * 2000;
 
             setTimeout(() => {
-                gsap.to([leftPupilRef.current, rightPupilRef.current].map(ref => ref?.parentElement), {
+                gsap.to([leftParent, rightParent], {
                     scaleY: 0.1,
                     duration: 0.08,
                     yoyo: true,
@@ -69,7 +74,13 @@ export const DynamicNavbar = (): JSX.Element => {
             }, delay);
         };
 
-        blink();
+        if (leftPupilRef.current && rightPupilRef.current) {
+            blink();
+        }
+
+        return () => {
+            gsap.killTweensOf([leftPupilRef.current?.parentElement, rightPupilRef.current?.parentElement]);
+        };
     }, []);
 
     useEffect(() => {
@@ -256,25 +267,17 @@ export const DynamicNavbar = (): JSX.Element => {
                 ref={navContainerRef}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className="flex items-center backdrop-blur-md px-3 py-2 rounded-full shadow-lg transition-all duration-300 border"
-                style={{
-                    backgroundColor: 'var(--nav-bg)',
-                    borderColor: 'var(--nav-border)'
-                }}
+                className="flex items-center backdrop-blur-md px-3 py-2 rounded-full shadow-lg transition-all duration-300 bg-white/95 dark:bg-[#303030]/95 border border-black/10 dark:border-white/20"
             >
                 <div
                     ref={leftEyeContainerRef}
                     onClick={() => handleEyeClick('left')}
                     className="flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
                 >
-                    <div 
-                        className="w-7 h-7 rounded-full flex items-center justify-center relative overflow-hidden transition-all duration-300"
-                        style={{ backgroundColor: 'var(--foreground)' }}
-                    >
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center relative overflow-hidden transition-all duration-300 bg-black dark:bg-white">
                         <div
                             ref={leftPupilRef}
-                            className="w-2 h-4 rounded-full transition-all duration-300"
-                            style={{ backgroundColor: 'var(--background)' }}
+                            className="w-2 h-4 rounded-full transition-all duration-300 bg-white dark:bg-black"
                         />
                     </div>
                 </div>
@@ -299,14 +302,10 @@ export const DynamicNavbar = (): JSX.Element => {
                                         e.preventDefault();
                                         scrollToSection(link.href);
                                     }}
-                                    className="relative font-montserrat font-medium text-xs hover:opacity-70 transition-all cursor-pointer whitespace-nowrap group text-center"
-                                    style={{ color: 'var(--foreground)' }}
+                                    className="relative font-montserrat font-medium text-xs hover:opacity-70 transition-all cursor-pointer whitespace-nowrap group text-center text-black dark:text-white"
                                 >
                                     {link.label}
-                                    <span 
-                                        className="absolute -bottom-1 left-0 w-0 h-px transition-all duration-300 group-hover:w-full" 
-                                        style={{ backgroundColor: 'var(--foreground)' }}
-                                    />
+                                    <span className="absolute -bottom-1 left-0 w-0 h-px transition-all duration-300 group-hover:w-full bg-black dark:bg-white" />
                                 </a>
                             ))}
                         </div>
@@ -319,14 +318,10 @@ export const DynamicNavbar = (): JSX.Element => {
                                         e.preventDefault();
                                         scrollToSection(link.href);
                                     }}
-                                    className="relative font-montserrat font-medium text-xs hover:opacity-70 transition-all cursor-pointer whitespace-nowrap group text-center"
-                                    style={{ color: 'var(--foreground)' }}
+                                    className="relative font-montserrat font-medium text-xs hover:opacity-70 transition-all cursor-pointer whitespace-nowrap group text-center text-black dark:text-white"
                                 >
                                     {link.label}
-                                    <span 
-                                        className="absolute -bottom-1 left-0 w-0 h-px transition-all duration-300 group-hover:w-full" 
-                                        style={{ backgroundColor: 'var(--foreground)' }}
-                                    />
+                                    <span className="absolute -bottom-1 left-0 w-0 h-px transition-all duration-300 group-hover:w-full bg-black dark:bg-white" />
                                 </a>
                             ))}
                         </div>
@@ -341,14 +336,10 @@ export const DynamicNavbar = (): JSX.Element => {
                                     e.preventDefault();
                                     scrollToSection(link.href);
                                 }}
-                                className="relative font-montserrat font-medium text-xs hover:opacity-70 transition-all cursor-pointer whitespace-nowrap group"
-                                style={{ color: 'var(--foreground)' }}
+                                className="relative font-montserrat font-medium text-xs hover:opacity-70 transition-all cursor-pointer whitespace-nowrap group text-black dark:text-white"
                             >
                                 {link.label}
-                                <span 
-                                    className="absolute -bottom-1 left-0 w-0 h-px transition-all duration-300 group-hover:w-full" 
-                                    style={{ backgroundColor: 'var(--foreground)' }}
-                                />
+                                <span className="absolute -bottom-1 left-0 w-0 h-px transition-all duration-300 group-hover:w-full bg-black dark:bg-white" />
                             </a>
                         ))}
                     </div>
@@ -359,14 +350,10 @@ export const DynamicNavbar = (): JSX.Element => {
                     onClick={() => handleEyeClick('right')}
                     className="flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
                 >
-                    <div 
-                        className="w-7 h-7 rounded-full flex items-center justify-center relative overflow-hidden transition-all duration-300"
-                        style={{ backgroundColor: 'var(--foreground)' }}
-                    >
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center relative overflow-hidden transition-all duration-300 bg-black dark:bg-white">
                         <div
                             ref={rightPupilRef}
-                            className="w-2 h-4 rounded-full transition-all duration-300"
-                            style={{ backgroundColor: 'var(--background)' }}
+                            className="w-2 h-4 rounded-full transition-all duration-300 bg-white dark:bg-black"
                         />
                     </div>
                 </div>

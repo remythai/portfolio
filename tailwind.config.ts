@@ -8,6 +8,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      gridColumn: {
+        'span-1.5': 'span 1.5 / span 1.5',
+      },
       fontFamily: {
         montserrat: ['var(--font-montserrat)'],
         raleway: ['var(--font-raleway)'],

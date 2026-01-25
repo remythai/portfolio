@@ -41,7 +41,7 @@ export const EducationSection = (): JSX.Element => {
       period: "EPITECH 1ère année",
       title: "Fondamentaux du Développement",
       description: "Introduction à la programmation, algorithmes et méthodologies de développement logiciel. En langage C.",
-      detailedDescription: "Acquisition des bases solides en programmation C, structures de données, algorithmique et gestion de projets. Apprentissage de la méthodologie projet Epitech basée sur l'autonomie et le peer-learning.",
+      detailedDescription: "Acquisition des bases solides en programmation C, structures de données, algorithmique et gestion de projets. Apprentissage de la méthodologie projet Epitech basée sur l'autonomie et le peer-learning. Participation à la piscine 'Unix & C Lab Seminar' et de ses stumpers.",
       status: "completed"
     },
     {
@@ -57,7 +57,7 @@ export const EducationSection = (): JSX.Element => {
       period: "EPITECH 2ème année - Semestre 2",
       title: "Approfondissement Technique",
       description: "Développement avancé, architecture logicielle et projets collaboratifs en équipe. En langage C++.",
-      detailedDescription: "Projets avancés incluant le développement d'une borne d'arcade avec plusieurs librairies graphiques en C++ (Projet Arcade). Maîtrise de la Programmation Orientée Objet, des design patterns et des outils de collaboration Git. Travail en équipe sur des projets complexes.",
+      detailedDescription: "Projets avancés incluant le développement d'une borne d'arcade avec plusieurs librairies graphiques en C++ (Projet Arcade). Maîtrise de la Programmation Orientée Objet, des design patterns et des outils de collaboration Git. Travail en équipe sur des projets complexes. Réalisation de la piscine 'Paradigms Seminar'",
       links: [
         { label: "Projet Arcade", url: "https://github.com/remythai/Arcade-Epitech", type: "github" }
       ],
@@ -79,7 +79,7 @@ export const EducationSection = (): JSX.Element => {
       period: "EPITECH YEAR 3 - S1",
       title: "Projets conséquents",
       description: "Développement full-stack, réalisation d'un moteur graphique de jeu, projets complexes et technologies modernes.",
-      detailedDescription: "Projets comme l'AREA (plateforme d'Action-Reaction) avec OAuth, Next.js, React, Node.js et PostgreSQL. Maîtrise de Docker, des API REST et de l'architecture full-stack moderne. Ainsi que la réalisation du projet R-Type, reproduction du jeu R-Type en C++ en réseau avec un ECS maison.",
+      detailedDescription: "Projets comme l'AREA (plateforme d'Action-Reaction) avec OAuth, Next.js, React, Node.js et PostgreSQL. Maîtrise de Docker, des API REST et de l'architecture full-stack moderne. Ainsi que la réalisation du projet R-Type, reproduction du jeu R-Type en C++ en réseau avec un ECS maison. Réalisation de la piscine 'Survivor Seminar'",
       links: [
         { label: "Projet R-TYPE", url: "https://github.com/remythai/R-TYPE", type: "github" },
         { label: "Projet AREA", url: "https://github.com/LoukaOrtegaCand/AREA", type: "github" }
@@ -320,7 +320,6 @@ export const EducationSection = (): JSX.Element => {
         </div>
 
         <div className="relative">
-          {/* Timeline line - Desktop */}
           <div className="absolute left-1/2 top-0 w-0.5 h-full -translate-x-1/2 hidden md:block transition-colors duration-300 bg-black/20 dark:bg-white/20">
             <div
               ref={lineRef}
@@ -329,7 +328,6 @@ export const EducationSection = (): JSX.Element => {
             />
           </div>
 
-          {/* Timeline line - Mobile */}
           <div className="absolute left-2 top-0 w-0.5 h-full md:hidden transition-colors duration-300 bg-black/20 dark:bg-white/20">
             <div
               className="absolute top-0 left-0 w-full origin-top transition-colors duration-300 bg-black dark:bg-white"

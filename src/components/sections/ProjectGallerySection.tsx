@@ -1,21 +1,17 @@
 'use client'
 
-
 import { JSX, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
 
-
 gsap.registerPlugin(ScrollTrigger);
-
 
 const filterCategories = [
   { id: "all", label: "TOUS" },
   { id: "school", label: "EPITECH" },
   { id: "other", label: "AUTRES" },
 ];
-
 
 const projectData = [
   {
@@ -117,32 +113,106 @@ const projectData = [
     image: "/projects/paupropre.jpg",
     inProgress: false,
   },
+  {
+    id: 10,
+    title: "Astexte",
+    description: "Assistance de la professeure de communication professionnelle à Epitech (2ème et 3ème année). Aide à la préparation, au bon déroulement des cours ainsi qu'à la notation des étudiants.",
+    category: ["other"],
+    tags: "Langues • Communication Professionnelle • Correcteur",
+    githubLink: null,
+    demoLink: null,
+    image: "/pau.jpg",
+    inProgress: false,
+  },
+  {
+    id: 11,
+    title: "Portfolio",
+    description: "Vous êtes déjà au bon endroit ! Hébergé, nom de domaine, responsive !",
+    category: ["other"],
+    tags: "Jour - Nuit • Responsiveness • Portfolio",
+    githubLink: null,
+    demoLink: null,
+    image: "/pau.jpg",
+    inProgress: false,
+  },
 ];
-
 
 export const ProjectGallerySection = (): JSX.Element => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [mounted, setMounted] = useState(false);
+  const [itemsToShow, setItemsToShow] = useState(6);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const projectGridRef = useRef<HTMLDivElement>(null);
-
+  const filterRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
 
   const filteredProjects = projectData.filter((project) => {
     if (activeFilter === "all") return true;
     return project.category.includes(activeFilter);
   });
 
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
+      setItemsToShow(isMobile ? 3 : 6);
+      setIsExpanded(false);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!filterRef.current || !indicatorRef.current) return;
+
+    const buttons = filterRef.current.querySelectorAll("button");
+    const activeButton = Array.from(buttons).find(
+      (btn) => btn.getAttribute("data-filter") === activeFilter
+    ) as HTMLElement | undefined;
+
+    if (activeButton) {
+      gsap.to(indicatorRef.current, {
+        width: activeButton.offsetWidth,
+        x: activeButton.offsetLeft,
+        duration: 0.8,
+        ease: "power3.out",
+      });
+    }
+  }, [activeFilter]);
+
+  const handleFilterChange = (filterId: string) => {
+    setActiveFilter(filterId);
+    setIsExpanded(false);
+  };
+
+  const handleLoadMore = () => {
+    setIsExpanded(true);
+    setItemsToShow(filteredProjects.length);
+  };
+
+  const handleShowLess = () => {
+    setIsExpanded(false);
+    const isMobile = window.innerWidth < 768;
+    setItemsToShow(isMobile ? 3 : 6);
+
+    if (sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const visibleProjects = filteredProjects.slice(0, itemsToShow);
+  const hasMore = filteredProjects.length > itemsToShow;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-
   useEffect(() => {
     if (!sectionRef.current) return;
-
 
     const ctx = gsap.context(() => {
       gsap.from(titleRef.current, {
@@ -153,11 +223,10 @@ export const ProjectGallerySection = (): JSX.Element => {
         scrollTrigger: {
           trigger: titleRef.current,
           start: "top 80%",
-        }
+        },
       });
 
-
-      const projectCards = projectGridRef.current?.querySelectorAll('.project-card');
+      const projectCards = projectGridRef.current?.querySelectorAll(".project-card");
       if (projectCards) {
         gsap.from(projectCards, {
           opacity: 0,
@@ -170,20 +239,19 @@ export const ProjectGallerySection = (): JSX.Element => {
           scrollTrigger: {
             trigger: projectGridRef.current,
             start: "top 70%",
-          }
+          },
         });
       }
     }, sectionRef);
 
-
     return () => ctx.revert();
   }, []);
 
-
   useEffect(() => {
-    const projectCards = projectGridRef.current?.querySelectorAll('.project-card');
+    const projectCards = projectGridRef.current?.querySelectorAll(".project-card");
     if (projectCards && projectCards.length > 0) {
-      gsap.fromTo(projectCards,
+      gsap.fromTo(
+        projectCards,
         { opacity: 0, scale: 0.95, y: 20 },
         {
           opacity: 1,
@@ -192,17 +260,15 @@ export const ProjectGallerySection = (): JSX.Element => {
           duration: 0.4,
           stagger: 0.08,
           ease: "power2.out",
-          clearProps: "all"
+          clearProps: "all",
         }
       );
     }
-  }, [filteredProjects]);
-
+  }, [filteredProjects, itemsToShow]);
 
   if (!mounted) {
     return <></>;
   }
-
 
   return (
     <section
@@ -224,9 +290,7 @@ export const ProjectGallerySection = (): JSX.Element => {
           priority
         />
 
-
         <div className="absolute inset-0 transition-colors duration-300 bg-black/40 dark:bg-black/60" />
-
 
         <div className="relative z-10 border-4 md:border-8 border-solid border-white px-8 md:px-12 py-4 md:py-6">
           <h2 className="font-montserrat font-bold text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px] text-white">
@@ -235,120 +299,158 @@ export const ProjectGallerySection = (): JSX.Element => {
         </div>
       </div>
 
-
       <nav
         className="max-w-2xl mx-auto px-4 mb-8 md:mb-12"
         aria-label="Portfolio filter"
       >
-        <div className="relative flex items-center justify-center gap-4 md:gap-8 lg:gap-12">
+        <div
+          ref={filterRef}
+          className="relative flex items-center justify-center gap-4 md:gap-8 lg:gap-12 pb-2"
+        >
           {filterCategories.map((category) => (
             <button
               key={category.id}
-              onClick={() => setActiveFilter(category.id)}
-              className={`relative px-4 md:px-6 py-2 md:py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 ${
-                activeFilter === category.id
-                  ? 'text-black dark:text-white'
-                  : 'text-[#999999] dark:text-[#7c7c7c] hover:text-black dark:hover:text-white'
-              }`}
+              data-filter={category.id}
+              onClick={() => handleFilterChange(category.id)}
+              className={`relative px-4 md:px-6 py-2 md:py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 ${activeFilter === category.id
+                  ? "text-black dark:text-white"
+                  : "text-[#999999] dark:text-[#7c7c7c] hover:text-black dark:hover:text-white"
+                }`}
               aria-pressed={activeFilter === category.id}
             >
               {category.label}
-              {activeFilter === category.id && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 transition-colors duration-300 bg-black dark:bg-white" />
-              )}
             </button>
           ))}
+
+          <div
+            ref={indicatorRef}
+            className="absolute bottom-0 h-1 transition-colors duration-300 bg-black dark:bg-white rounded-full"
+            style={{ width: 0, left: 0 }}
+          />
         </div>
-
-
-        <div className="w-full h-px mt-2 transition-colors duration-300 bg-[#cccccc] dark:bg-[#7c7c7c]" aria-hidden="true" />
       </nav>
-
 
       <div className="w-full">
         <div
           ref={projectGridRef}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0"
         >
-          {filteredProjects.map((project) => (
-            <div
-              key={project.id}
-              className="project-card group relative aspect-[4/3] overflow-hidden transition-all duration-300"
-            >
-              <Image
-                src={project.image}
-                alt={project.title}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                quality={80}
-                loading="lazy"
-              />
+          {visibleProjects.map((project, index) => {
+            const total = visibleProjects.length;
+            const colsPerRow = 3;
+            const fullRows = Math.floor(total / colsPerRow);
+            const remainder = total % colsPerRow;
+            const lastRowStart = fullRows * colsPerRow;
 
+            let lastRowClasses = "";
 
-              <div className="absolute inset-0 transition-all duration-300 bg-black/30 dark:bg-black/40 group-hover:bg-black/60 dark:group-hover:bg-black/70" />
+            if (index >= lastRowStart && remainder > 0) {
+              if (remainder === 1) {
+                lastRowClasses = "lg:col-start-2";
+              } else if (remainder === 2) {
+                lastRowClasses = "lg:col-span-1.5";
+              }
+            }
 
+            return (
+              <div
+                key={project.id}
+                className={
+                  "project-card group relative aspect-[4/3] overflow-hidden transition-all duration-300 " +
+                  lastRowClasses
+                }
+              >
+                <Image
+                  src={project.image}
+                  alt={project.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  quality={80}
+                  loading="lazy"
+                />
 
-              {project.inProgress && (
-                <div className="absolute top-4 right-4 z-20 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-montserrat font-semibold tracking-wide">
-                  EN DÉVELOPPEMENT
-                </div>
-              )}
+                <div className="absolute inset-0 transition-all duration-300 bg-black/30 dark:bg-black/40 group-hover:bg-black/60 dark:group-hover:bg-black/70" />
 
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
-                {project.tags && (
-                  <p className="font-montserrat font-semibold text-blue-400 text-xs md:text-sm mb-2 tracking-wide">
-                    {project.tags}
-                  </p>
+                {project.inProgress && (
+                  <div className="absolute top-4 right-4 z-20 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-montserrat font-semibold tracking-wide">
+                    EN DÉVELOPPEMENT
+                  </div>
                 )}
 
-
-                <h3 className="font-montserrat font-bold text-white text-xl md:text-2xl mb-3 tracking-wider">
-                  {project.title}
-                </h3>
-
-
-                <p className="font-montserrat font-medium text-white/90 text-xs md:text-sm leading-relaxed mb-6 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  {project.description}
-                </p>
-
-
-                <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  {project.githubLink && (
-                    <>
-                      <div className="w-px h-6 bg-white/50" aria-hidden="true" />
-                      <a
-                        href={project.githubLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-montserrat font-semibold text-white text-xs tracking-widest hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-white px-4 py-2"
-                      >
-                        GITHUB
-                      </a>
-                      <div className="w-px h-6 bg-white/50" aria-hidden="true" />
-                    </>
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+                  {project.tags && (
+                    <p className="font-montserrat font-semibold text-blue-400 text-xs md:text-sm mb-2 tracking-wide">
+                      {project.tags}
+                    </p>
                   )}
 
+                  <h3 className="font-montserrat font-bold text-white text-xl md:text-2xl mb-3 tracking-wider">
+                    {project.title}
+                  </h3>
 
-                  {project.demoLink && (
-                    <>
-                      <a
-                        href={project.demoLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-montserrat font-semibold text-white text-xs tracking-widest hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-white px-4 py-2"
-                      >
-                        DEMO
-                      </a>
-                      <div className="w-px h-6 bg-white/50" aria-hidden="true" />
-                    </>
-                  )}
+                  <p className="font-montserrat font-medium text-white/90 text-xs md:text-sm leading-relaxed mb-6 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {project.description}
+                  </p>
+
+                  <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {project.githubLink && (
+                      <>
+                        <div className="w-px h-6 bg-white/50" aria-hidden="true" />
+                        <a
+                          href={project.githubLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-montserrat font-semibold text-white text-xs tracking-widest hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-white px-4 py-2"
+                        >
+                          GITHUB
+                        </a>
+                        <div className="w-px h-6 bg-white/50" aria-hidden="true" />
+                      </>
+                    )}
+
+                    {project.demoLink && (
+                      <>
+                        <a
+                          href={project.demoLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-montserrat font-semibold text-white text-xs tracking-widest hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-white px-4 py-2"
+                        >
+                          DEMO
+                        </a>
+                        <div className="w-px h-6 bg-white/50" aria-hidden="true" />
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
+        {(hasMore || isExpanded) && (
+          <div className="flex justify-center mt-8 md:mt-12">
+            {!isExpanded ? (
+              <button
+                onClick={handleLoadMore}
+                className="group relative px-8 py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 bg-black dark:bg-white text-white dark:text-black hover:bg-opacity-80 dark:hover:bg-opacity-80 rounded-md overflow-hidden"
+              >
+                VOIR PLUS
+                <span className="absolute inset-0 border-2 border-black dark:border-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md" />
+              </button>
+            ) : (
+              <button
+                onClick={handleShowLess}
+                className="group relative px-8 py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 bg-gray-600 dark:bg-gray-400 text-white dark:text-black hover:bg-opacity-80 dark:hover:bg-opacity-80 rounded-md overflow-hidden"
+              >
+                VOIR MOINS
+                <span className="absolute inset-0 border-2 border-gray-600 dark:border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md" />
+              </button>
+            )}
+          </div>
+        )}
+
         <p className="text-center font-montserrat font-semibold text-lg md:text-xl lg:text-2xl mt-12 md:mt-16 px-4 transition-colors duration-300 text-black dark:text-white">
           Et bien d'autres à venir !
         </p>

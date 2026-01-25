@@ -7,7 +7,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* AJOUTE CETTE LIGNE POUR ACTIVER LE DARK MODE */
 @variant dark (&:where(.dark, .dark *));
 
 :root {

@@ -66,3 +66,23 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow:
+      0 0 10px rgba(96, 165, 250, 0.8),
+      0 0 20px rgba(96, 165, 250, 0.6),
+      0 0 30px rgba(96, 165, 250, 0.4),
+      0 0 40px rgba(96, 165, 250, 0.3),
+      0 0 70px rgba(96, 165, 250, 0.2),
+      0 0 80px rgba(96, 165, 250, 0.1);
+  }
+  
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+.neon-text {
+  animation: neon-flicker 0.5s ease-in-out 1;
+}

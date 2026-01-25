@@ -9,6 +9,7 @@ export const Preloader = () => {
   const [mounted, setMounted] = useState(false);
   const preloaderRef = useRef<HTMLDivElement>(null);
   const backgroundRef = useRef<HTMLDivElement>(null);
+  const neonLayerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const cubesContainerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
@@ -30,7 +31,7 @@ export const Preloader = () => {
 
     if (cubesContainerRef.current) {
       cubesContainerRef.current.innerHTML = '';
-      
+
       for (let i = 0; i < totalCubes; i++) {
         const cube = document.createElement('div');
         cube.className = 'cube';
@@ -40,10 +41,9 @@ export const Preloader = () => {
           height: ${100 / rows}%;
           left: ${(i % cols) * (100 / cols)}%;
           top: ${Math.floor(i / cols) * (100 / rows)}%;
-          background: ${isDark ? '#303030' : '#f5f5f5'};
-          border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'};
+          background: ${isDark ? '#1a1a1a' : '#e5e5e5'};
           box-sizing: border-box;
-          opacity: 0;
+          opacity: 1;
         `;
         cubesContainerRef.current.appendChild(cube);
       }
@@ -57,66 +57,84 @@ export const Preloader = () => {
     });
 
     const cubes = document.querySelectorAll('.cube');
+    const neonFlicker = gsap.timeline({ repeat: 2 });
+
+    neonFlicker
+      .to(neonLayerRef.current, {
+        opacity: 0.3,
+        duration: 0.08,
+        ease: 'power1.inOut'
+      })
+      .to(neonLayerRef.current, {
+        opacity: 0.7,
+        duration: 0.08,
+        ease: 'power1.inOut'
+      })
+      .to(neonLayerRef.current, {
+        opacity: 0.2,
+        duration: 0.06,
+        ease: 'power1.inOut'
+      })
+      .to(neonLayerRef.current, {
+        opacity: 0.6,
+        duration: 0.1,
+        ease: 'power1.inOut'
+      });
 
     tl.fromTo(
       textRef.current,
-      { 
-        opacity: 0, 
+      {
+        opacity: 0,
         scale: 0.8,
         y: 30
       },
-      { 
-        opacity: 1, 
+      {
+        opacity: 1,
         scale: 1,
         y: 0,
         duration: 1.2,
         ease: 'power3.out'
       }
     )
-    .to(textRef.current, {
-      opacity: 1,
-      duration: 0.6
-    })
-    .to(cubes, {
-      opacity: 1,
-      duration: 0.01,
-      stagger: {
-        each: 0.025,
-        from: 'random',
-        ease: 'none'
-      }
-    }, '-=0.3')
-    .to(textRef.current, {
-      opacity: 0,
-      scale: 0.95,
-      duration: 0.8,
-      ease: 'power2.inOut'
-    }, '<')
-    .to({}, { duration: 0.3 })
-    .to(backgroundRef.current, {
-      opacity: 0,
-      duration: 0.4,
-      ease: 'power2.inOut'
-    })
-    .to(cubes, {
-      opacity: 0,
-      duration: 0.01,
-      stagger: {
-        each: 0.02,
-        from: 'random',
-        ease: 'none'
-      }
-    }, '-=0.2')
-    .to(preloaderRef.current, {
-      opacity: 0,
-      duration: 0.3,
-      ease: 'power2.inOut',
-      onStart: () => {
-        if (preloaderRef.current) {
-          preloaderRef.current.style.pointerEvents = 'none';
+      .add(neonFlicker, '-=0.6')
+      .to(textRef.current, {
+        opacity: 1,
+        duration: 0.4
+      })
+      .to(neonLayerRef.current, {
+        opacity: 0,
+        duration: 0.5,
+        ease: 'power2.inOut'
+      })
+      .to(backgroundRef.current, {
+        opacity: 0,
+        duration: 0.5,
+        ease: 'power2.inOut'
+      }, '<')
+      .to(textRef.current, {
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power2.inOut'
+      }, '<')
+      .to(cubes, {
+        opacity: 0,
+        duration: 0.01,
+        stagger: {
+          each: 0.015,
+          from: 'random',
+          ease: 'none'
         }
-      }
-    });
+      }, '<')
+      .to(preloaderRef.current, {
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.inOut',
+        onStart: () => {
+          if (preloaderRef.current) {
+            preloaderRef.current.style.pointerEvents = 'none';
+          }
+        }
+      });
 
     return () => {
       document.body.style.overflow = '';
@@ -133,7 +151,23 @@ export const Preloader = () => {
       <div
         ref={backgroundRef}
         className="absolute inset-0 z-[9998]"
-        style={{ backgroundColor: '#303030' }}
+        style={{ backgroundColor: '#0a0a0a' }}
+      />
+
+      <div
+        ref={neonLayerRef}
+        className="absolute inset-0 z-[9999]"
+        style={{
+          background: `
+            radial-gradient(circle at 50% 50%, 
+              rgba(96, 165, 250, 0.3) 0%, 
+              rgba(59, 130, 246, 0.2) 25%, 
+              rgba(37, 99, 235, 0.1) 50%, 
+              transparent 70%)
+          `,
+          opacity: 0.6,
+          filter: 'blur(40px)',
+        }}
       />
       <div
         ref={textRef}
@@ -141,7 +175,7 @@ export const Preloader = () => {
         style={{ opacity: 0 }}
       >
         <h1 className="font-raleway font-bold text-5xl md:text-7xl lg:text-8xl text-white tracking-wider">
-          Bienvenue
+          BIENVENUE
         </h1>
       </div>
       <div

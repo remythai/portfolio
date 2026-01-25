@@ -11,8 +11,6 @@ export const IntroductionHeroSection = (): JSX.Element => {
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
 
-  const isDark = theme === 'dark';
-
   const socialIcons = [
     {
       alt: "CV",
@@ -66,12 +64,11 @@ export const IntroductionHeroSection = (): JSX.Element => {
     return () => ctx.revert();
   }, []);
 
-
   if (!mounted) {
     return (
       <section
         className="relative w-full h-screen overflow-hidden"
-        style={{ backgroundColor: '#303030' }}
+        style={{ backgroundColor: 'var(--hero-bg)' }}
       />
     );
   }
@@ -79,40 +76,40 @@ export const IntroductionHeroSection = (): JSX.Element => {
   return (
     <section
       className="relative w-full h-screen overflow-hidden transition-colors duration-300"
-      style={{ backgroundColor: isDark ? '#303030' : '#f5f5f5' }}
+      style={{ backgroundColor: 'var(--hero-bg)' }}
     >
       <div
         className="absolute inset-0 hidden lg:block transition-colors duration-300"
         style={{
-          backgroundColor: isDark ? '#d7d7d7' : '#303030',
+          backgroundColor: 'var(--hero-clip-bg)',
           clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 42% 100%)'
         }}
       />
+
       <div className="relative w-full h-full hidden lg:flex items-center px-4 lg:px-[271px] z-10">
         <div className="w-full flex flex-row items-center gap-12">
           <div ref={textRef} className="w-auto flex flex-col justify-center items-start">
             <div className="text-left">
               <p
                 className="font-raleway font-bold text-[40px] mb-6 transition-colors duration-300"
-                style={{ color: isDark ? '#ffffff' : '#000000' }}
+                style={{ color: 'var(--foreground)' }}
               >
                 Bonjour, je suis
               </p>
 
               <h1
                 className="font-raleway font-bold text-[80px] leading-tight mb-6 transition-colors duration-300"
-                style={{ color: isDark ? '#ffffff' : '#000000' }}
+                style={{ color: 'var(--foreground)' }}
               >
                 Rémy Thai
               </h1>
 
               <p
                 className="font-raleway font-extrabold text-[25px] mb-12 transition-colors duration-300"
-                style={{ color: isDark ? '#6f6f6f' : '#3a3a3a' }}
+                style={{ color: 'var(--hero-subtitle)' }}
               >
                 Développeur informatique
               </p>
-
 
               <div className="flex gap-8 justify-start">
                 {socialIcons.map((social, index) => (
@@ -123,8 +120,8 @@ export const IntroductionHeroSection = (): JSX.Element => {
                     rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
                     className="w-16 h-16 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center"
                     style={{
-                      backgroundColor: isDark ? '#3b3b3b' : '#e5e5e5',
-                      color: isDark ? '#d7d7d7' : '#303030'
+                      backgroundColor: 'var(--hero-social-bg)',
+                      color: 'var(--hero-social-color)'
                     }}
                     aria-label={social.alt}
                   >
@@ -138,7 +135,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
           <div className="absolute bottom-0 right-[150px]">
             <div className="relative w-[700px] h-[784px]">
               <Image
-                src={isDark ? "/remy.png" : "/remy_white.png"}
+                src={theme === 'dark' ? "/remy.png" : "/remy_white.png"}
                 alt="Rémy Thai professional photo"
                 fill
                 sizes="700px"
@@ -155,7 +152,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
         <div ref={imageRef} className="absolute bottom-0 left-0 right-0 z-0">
           <div className="relative w-full h-[850px]">
             <Image
-              src={isDark ? "/remy.png" : "/remy_white.png"}
+              src={theme === 'dark' ? "/remy.png" : "/remy_white.png"}
               alt="Rémy Thai professional photo"
               fill
               sizes="100vw"
@@ -165,35 +162,38 @@ export const IntroductionHeroSection = (): JSX.Element => {
             />
           </div>
         </div>
+
         <div
           className="absolute inset-0 backdrop-blur-sm z-5 transition-colors duration-300"
           style={{
-            backgroundColor: isDark ? 'rgba(48, 48, 48, 0.6)' : 'rgba(245, 245, 245, 0.6)',
+            backgroundColor: 'var(--hero-mobile-overlay)',
             clipPath: 'polygon(0 82.5%, 100% 70%, 100% 100%, 0 100%)'
           }}
         />
+
         <div ref={textRef} className="absolute bottom-6 left-6 z-10">
           <p
             className="font-raleway font-bold text-lg mb-2 transition-colors duration-300"
-            style={{ color: isDark ? '#ffffff' : '#303030' }}
+            style={{ color: 'var(--hero-mobile-text)' }}
           >
             Bonjour, je suis
           </p>
 
           <h1
             className="font-raleway font-bold text-4xl leading-tight mb-2 transition-colors duration-300"
-            style={{ color: isDark ? '#ffffff' : '#303030' }}
+            style={{ color: 'var(--hero-mobile-text)' }}
           >
             Rémy Thai
           </h1>
 
           <p
             className="font-raleway font-extrabold text-base transition-colors duration-300"
-            style={{ color: isDark ? 'rgb(229, 229, 229)' : '#505050' }}
+            style={{ color: 'var(--hero-mobile-subtitle)' }}
           >
             Développeur informatique
           </p>
         </div>
+
         <div className="absolute bottom-6 right-6 flex flex-col gap-3 z-20">
           {socialIcons.map((social, index) => (
             <a
@@ -203,8 +203,8 @@ export const IntroductionHeroSection = (): JSX.Element => {
               rel={social.alt !== "CV" ? "noopener noreferrer" : undefined}
               className="w-12 h-12 shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center rounded"
               style={{
-                backgroundColor: isDark ? '#c4c4c4' : '#505050',
-                color: isDark ? '#303030' : '#ffffff'
+                backgroundColor: 'var(--hero-mobile-social-bg)',
+                color: 'var(--hero-mobile-social-color)'
               }}
               aria-label={social.alt}
             >

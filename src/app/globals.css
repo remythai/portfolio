@@ -1,32 +1,133 @@
 @import "tailwindcss";
 
+
 :root {
   --background: #D7D7D7;
   --foreground: #171717;
+
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --nav-border: rgba(0, 0, 0, 0.1);
+
+  --hero-bg: #f5f5f5;
+  --hero-clip-bg: #303030;
+  --hero-subtitle: #3a3a3a;
+  --hero-social-bg: #e5e5e5;
+  --hero-social-color: #303030;
+
+  --hero-mobile-overlay: rgba(245, 245, 245, 0.6);
+  --hero-mobile-text: #303030;
+  --hero-mobile-subtitle: #505050;
+  --hero-mobile-social-bg: #505050;
+  --hero-mobile-social-color: #ffffff;
+
+  --education-bg: #f5f5f5;
+  --education-title: #000000;
+  --education-text: #000000;
+  --education-text-secondary: rgba(0, 0, 0, 0.8);
+  --education-text-muted: rgba(0, 0, 0, 0.6);
+  --education-button-text: rgba(0, 0, 0, 0.7);
+  --education-detail-text: rgba(0, 0, 0, 0.7);
+  --education-timeline-bg: rgba(0, 0, 0, 0.2);
+  --education-timeline-active: #000000;
+  --education-border: rgba(0, 0, 0, 0.2);
+  --education-border-inactive: rgba(0, 0, 0, 0.3);
+  --education-dot-bg: #ffffff;
+  --education-dot-border: #000000;
+  --education-link-bg: rgba(0, 0, 0, 0.05);
+  --education-link-bg-hover: rgba(0, 0, 0, 0.1);
+  --education-link-text: rgba(0, 0, 0, 0.7);
 }
+
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    --nav-bg: rgba(48, 48, 48, 0.95);
+    --nav-border: rgba(255, 255, 255, 0.2);
+
+    --hero-bg: #303030;
+    --hero-clip-bg: #d7d7d7;
+    --hero-subtitle: #6f6f6f;
+    --hero-social-bg: #3b3b3b;
+    --hero-social-color: #d7d7d7;
+
+    --hero-mobile-overlay: rgba(48, 48, 48, 0.6);
+    --hero-mobile-text: #ffffff;
+    --hero-mobile-subtitle: rgb(229, 229, 229);
+    --hero-mobile-social-bg: #c4c4c4;
+    --hero-mobile-social-color: #303030;
+
+    --education-bg: #303030;
+    --education-title: #ffffff;
+    --education-text: #ffffff;
+    --education-text-secondary: rgba(255, 255, 255, 0.8);
+    --education-text-muted: rgba(255, 255, 255, 0.6);
+    --education-button-text: rgba(255, 255, 255, 0.7);
+    --education-detail-text: rgba(255, 255, 255, 0.7);
+    --education-timeline-bg: rgba(255, 255, 255, 0.2);
+    --education-timeline-active: #ffffff;
+    --education-border: rgba(255, 255, 255, 0.2);
+    --education-border-inactive: rgba(255, 255, 255, 0.3);
+    --education-dot-bg: #ffffff;
+    --education-dot-border: #ffffff;
+    --education-link-bg: rgba(255, 255, 255, 0.05);
+    --education-link-bg-hover: rgba(255, 255, 255, 0.1);
+    --education-link-text: rgba(255, 255, 255, 0.7);
   }
 }
+
 
 .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
+
+  --nav-bg: rgba(48, 48, 48, 0.95);
+  --nav-border: rgba(255, 255, 255, 0.2);
+
+  --hero-bg: #303030;
+  --hero-clip-bg: #d7d7d7;
+  --hero-subtitle: #6f6f6f;
+  --hero-social-bg: #3b3b3b;
+  --hero-social-color: #d7d7d7;
+
+  --hero-mobile-overlay: rgba(48, 48, 48, 0.6);
+  --hero-mobile-text: #ffffff;
+  --hero-mobile-subtitle: rgb(229, 229, 229);
+  --hero-mobile-social-bg: #c4c4c4;
+  --hero-mobile-social-color: #303030;
+
+  --education-bg: #303030;
+  --education-title: #ffffff;
+  --education-text: #ffffff;
+  --education-text-secondary: rgba(255, 255, 255, 0.8);
+  --education-text-muted: rgba(255, 255, 255, 0.6);
+  --education-button-text: rgba(255, 255, 255, 0.7);
+  --education-detail-text: rgba(255, 255, 255, 0.7);
+  --education-timeline-bg: rgba(255, 255, 255, 0.2);
+  --education-timeline-active: #ffffff;
+  --education-border: rgba(255, 255, 255, 0.2);
+  --education-border-inactive: rgba(255, 255, 255, 0.3);
+  --education-dot-bg: #ffffff;
+  --education-dot-border: #ffffff;
+  --education-link-bg: rgba(255, 255, 255, 0.05);
+  --education-link-bg-hover: rgba(255, 255, 255, 0.1);
+  --education-link-text: rgba(255, 255, 255, 0.7);
 }
+
 
 @layer base {
   * {
     @apply select-none;
   }
-  
+
   input,
   textarea,
   [contenteditable="true"] {
     @apply select-text;
   }
+
 
   button,
   input,
@@ -36,22 +137,26 @@
   }
 }
 
+
 @layer components {
   .all-\[unset\] {
     all: unset;
   }
 }
 
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
 
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 }
+
 
 @theme inline {
   --color-background: var(--background);
@@ -60,12 +165,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+
 
 @keyframes neon-flicker {
   0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
@@ -77,11 +184,12 @@ body {
       0 0 70px rgba(96, 165, 250, 0.2),
       0 0 80px rgba(96, 165, 250, 0.1);
   }
-  
+
   20%, 24%, 55% {
     text-shadow: none;
   }
 }
+
 
 .neon-text {
   animation: neon-flicker 0.5s ease-in-out 1;

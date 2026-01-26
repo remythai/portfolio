@@ -1,8 +1,11 @@
 'use client'
-import { JSX, useState } from "react";
 
+import { JSX, useState } from "react";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const ContactFormSection = (): JSX.Element => {
+  const { t } = useLanguage();
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -11,7 +14,6 @@ export const ContactFormSection = (): JSX.Element => {
   });
   const [status, setStatus] = useState<{ type: 'success' | 'error' | '', message: string }>({ type: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
-
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -23,12 +25,10 @@ export const ContactFormSection = (): JSX.Element => {
     }));
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setStatus({ type: '', message: '' });
-
 
     try {
       const response = await fetch('/api/contact', {
@@ -39,23 +39,20 @@ export const ContactFormSection = (): JSX.Element => {
         body: JSON.stringify(formData),
       });
 
-
       const data = await response.json();
 
-
       if (response.ok) {
-        setStatus({ type: 'success', message: 'Message envoyé avec succès! Je vous répondrai bientôt.' });
+        setStatus({ type: 'success', message: t.contact.success });
         setFormData({ name: "", email: "", phone: "", message: "" });
       } else {
-        setStatus({ type: 'error', message: data.error || 'Erreur lors de l\'envoi du message.' });
+        setStatus({ type: 'error', message: data.error || t.contact.error });
       }
     } catch (error) {
-      setStatus({ type: 'error', message: 'Erreur réseau. Veuillez réessayer.' });
+      setStatus({ type: 'error', message: t.contact.errorNetwork });
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <section 
@@ -73,16 +70,14 @@ export const ContactFormSection = (): JSX.Element => {
       <div className="relative w-full flex justify-center mb-12 md:mb-16">
         <div className="relative border-4 md:border-8 border-solid transition-colors duration-300 border-black dark:border-white px-8 md:px-12 py-4 md:py-6">
           <h2 className="font-montserrat font-bold transition-colors duration-300 text-black dark:text-white text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px]">
-            CONTACT
+            {t.contact.title}
           </h2>
         </div>
       </div>
 
-
       <p className="relative max-w-2xl mx-auto font-open-sans font-normal transition-colors duration-300 text-black dark:text-white text-sm sm:text-base md:text-[15px] text-center leading-relaxed px-4 mb-12 md:mb-16">
-        Le plaisir serait pour moi de pouvoir échanger avec vous !
+        {t.contact.description}
       </p>
-
 
       {status.message && (
         <div className={`relative max-w-2xl mx-auto mb-6 p-4 rounded transition-colors duration-300 ${
@@ -94,11 +89,10 @@ export const ContactFormSection = (): JSX.Element => {
         </div>
       )}
 
-
       <form onSubmit={handleSubmit} className="relative max-w-2xl mx-auto space-y-8 md:space-y-12">
         <div className="relative">
           <div className="flex items-start border-l-4 border-b-4 transition-colors duration-300 border-black dark:border-white pl-4 pb-2">
-            <label htmlFor="name" className="sr-only">Entrez votre nom</label>
+            <label htmlFor="name" className="sr-only">{t.contact.name}</label>
             <input
               type="text"
               id="name"
@@ -106,16 +100,15 @@ export const ContactFormSection = (): JSX.Element => {
               value={formData.name}
               onChange={handleInputChange}
               required
-              placeholder="ENTREZ VOTRE NOM*"
+              placeholder={t.contact.name}
               className="w-full bg-transparent border-none outline-none font-montserrat font-bold transition-colors duration-300 text-gray-500 dark:text-gray-400 text-xs sm:text-sm tracking-[0.56px] placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:text-black dark:focus:text-white py-2"
             />
           </div>
         </div>
 
-
         <div className="relative">
           <div className="flex items-start border-l-4 border-b-4 transition-colors duration-300 border-black dark:border-white pl-4 pb-2">
-            <label htmlFor="email" className="sr-only">Entrez votre email</label>
+            <label htmlFor="email" className="sr-only">{t.contact.email}</label>
             <input
               type="email"
               id="email"
@@ -123,45 +116,42 @@ export const ContactFormSection = (): JSX.Element => {
               value={formData.email}
               onChange={handleInputChange}
               required
-              placeholder="ENTREZ VOTRE EMAIL*"
+              placeholder={t.contact.email}
               className="w-full bg-transparent border-none outline-none font-montserrat font-bold transition-colors duration-300 text-gray-500 dark:text-gray-400 text-xs sm:text-sm tracking-[0.56px] placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:text-black dark:focus:text-white py-2"
             />
           </div>
         </div>
 
-
         <div className="relative">
           <div className="flex items-start border-l-4 border-b-4 transition-colors duration-300 border-black dark:border-white pl-4 pb-2">
-            <label htmlFor="phone" className="sr-only">Numéro de téléphone</label>
+            <label htmlFor="phone" className="sr-only">{t.contact.phone}</label>
             <input
               type="tel"
               id="phone"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
-              placeholder="NUMERO DE TELEPHONE"
+              placeholder={t.contact.phone}
               className="w-full bg-transparent border-none outline-none font-montserrat font-bold transition-colors duration-300 text-gray-500 dark:text-gray-400 text-xs sm:text-sm tracking-[0.56px] placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:text-black dark:focus:text-white py-2"
             />
           </div>
         </div>
 
-
         <div className="relative">
           <div className="flex items-start border-l-4 border-b-4 transition-colors duration-300 border-black dark:border-white pl-4 pb-2">
-            <label htmlFor="message" className="sr-only">Votre message</label>
+            <label htmlFor="message" className="sr-only">{t.contact.message}</label>
             <textarea
               id="message"
               name="message"
               value={formData.message}
               onChange={handleInputChange}
               required
-              placeholder="VOTRE MESSAGE*"
+              placeholder={t.contact.message}
               rows={6}
               className="w-full bg-transparent border-none outline-none resize-none font-montserrat font-bold transition-colors duration-300 text-gray-500 dark:text-gray-400 text-xs sm:text-sm tracking-[0.56px] placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:text-black dark:focus:text-white py-2"
             />
           </div>
         </div>
-
 
         <div className="relative flex justify-center md:justify-end">
           <button
@@ -169,7 +159,7 @@ export const ContactFormSection = (): JSX.Element => {
             disabled={isLoading}
             className="w-full sm:w-auto min-w-[200px] px-8 py-3 border-l-2 border-r-2 transition-all duration-300 border-black dark:border-white font-montserrat font-bold text-black dark:text-white text-sm sm:text-base text-center tracking-[1.60px] bg-transparent hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'ENVOI...' : 'SOUMETTRE'}
+            {isLoading ? t.contact.sending : t.contact.submit}
           </button>
         </div>
       </form>

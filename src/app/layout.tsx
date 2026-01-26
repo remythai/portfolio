@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Montserrat, Raleway, Open_Sans, Nunito, Roboto } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Preloader } from "@/components/layout/Preloader";
+
 
 const montserrat = Montserrat({
   weight: ['400', '500', '600', '700'],
@@ -11,12 +13,14 @@ const montserrat = Montserrat({
   display: 'swap',
 });
 
+
 const raleway = Raleway({
   weight: ['700', '800'],
   subsets: ['latin'],
   variable: '--font-raleway',
   display: 'swap',
 });
+
 
 const openSans = Open_Sans({
   weight: ['300', '400'],
@@ -25,12 +29,14 @@ const openSans = Open_Sans({
   display: 'swap',
 });
 
+
 const nunito = Nunito({
   weight: ['400', '700'],
   subsets: ['latin'],
   variable: '--font-nunito',
   display: 'swap',
 });
+
 
 const roboto = Roboto({
   weight: ['400'],
@@ -39,10 +45,12 @@ const roboto = Roboto({
   display: 'swap',
 });
 
+
 export const metadata: Metadata = {
   title: "Rémy Thai - Portfolio",
   description: "Développeur informatique",
 };
+
 
 export default function RootLayout({
   children,
@@ -57,8 +65,10 @@ export default function RootLayout({
     >
       <body className="antialiased no-scrollbar">
         <ThemeProvider>
-          <Preloader />
-          {children}
+          <LanguageProvider>
+            <Preloader />
+            {children}
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

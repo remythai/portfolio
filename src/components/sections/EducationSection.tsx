@@ -1,7 +1,9 @@
 'use client'
+
 import { JSX, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -26,60 +28,61 @@ export const EducationSection = (): JSX.Element => {
   const detailsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const { t } = useLanguage();
 
   const timelineEvents: TimelineEvent[] = [
     {
-      year: "2021 - 2022",
-      period: "Lycée Immaculée Conception - Pau",
-      title: "Baccalauréat général - Mention Bien",
-      description: "Spécialités Mathématiques et Physique-Chimie et section européenne",
-      detailedDescription: "Après avoir lâché la spécialité Numérique et Sciences de l'Informatique en classe de 1ère, j'ai développé mes compétences analytiques et scientifiques à travers les spécialités Maths et Physique-Chimie. La section européenne m'a permis de renforcer mon anglais technique.",
+      year: t.education.periods.bac.year,
+      period: t.education.periods.bac.period,
+      title: t.education.periods.bac.title,
+      description: t.education.periods.bac.description,
+      detailedDescription: t.education.periods.bac.detailedDescription,
       status: "completed"
     },
     {
-      year: "2023",
-      period: "EPITECH 1ère année",
-      title: "Fondamentaux du Développement",
-      description: "Introduction à la programmation, algorithmes et méthodologies de développement logiciel. En langage C.",
-      detailedDescription: "Acquisition des bases solides en programmation C, structures de données, algorithmique et gestion de projets. Apprentissage de la méthodologie projet Epitech basée sur l'autonomie et le peer-learning. Participation à la piscine 'Unix & C Lab Seminar' et de ses stumpers.",
+      year: t.education.periods.year1.year,
+      period: t.education.periods.year1.period,
+      title: t.education.periods.year1.title,
+      description: t.education.periods.year1.description,
+      detailedDescription: t.education.periods.year1.detailedDescription,
       status: "completed"
     },
     {
-      year: "2024",
-      period: "EPITECH 2ème année - Semestre 1",
-      title: "Stage chez Rhinov",
-      description: "Première expérience professionnelle significative en environnement de production.",
-      detailedDescription: "Stage de 4 mois en environnement professionnel. Mise en pratique des compétences acquises, découverte des méthodologies agiles et intégration dans une équipe de développement. Migration du 'Book d'inspi' d'Angular à QwikJs.",
+      year: t.education.periods.internship1.year,
+      period: t.education.periods.internship1.period,
+      title: t.education.periods.internship1.title,
+      description: t.education.periods.internship1.description,
+      detailedDescription: t.education.periods.internship1.detailedDescription,
       status: "completed"
     },
     {
-      year: "2024",
-      period: "EPITECH 2ème année - Semestre 2",
-      title: "Approfondissement Technique",
-      description: "Développement avancé, architecture logicielle et projets collaboratifs en équipe. En langage C++.",
-      detailedDescription: "Projets avancés incluant le développement d'une borne d'arcade avec plusieurs librairies graphiques en C++ (Projet Arcade). Maîtrise de la Programmation Orientée Objet, des design patterns et des outils de collaboration Git. Travail en équipe sur des projets complexes. Réalisation de la piscine 'Paradigms Seminar'",
+      year: t.education.periods.year2.year,
+      period: t.education.periods.year2.period,
+      title: t.education.periods.year2.title,
+      description: t.education.periods.year2.description,
+      detailedDescription: t.education.periods.year2.detailedDescription,
       links: [
         { label: "Projet Arcade", url: "https://github.com/remythai/Arcade-Epitech", type: "github" }
       ],
       status: "completed"
     },
     {
-      year: "2024",
-      period: "ÉTÉ 2024",
-      title: "Job d'Été",
-      description: "Runner au Diego à Arcachon Plage",
-      detailedDescription: "Expérience estivale permettant de financer mes études tout en développant ma polyvalence. Service, bar, plonge, relation client, j'ai pu découvrir de nombreux aspects de la restauration. J'ai même obtenu un commentaire par rapport à mon service !",
+      year: t.education.periods.summer.year,
+      period: t.education.periods.summer.period,
+      title: t.education.periods.summer.title,
+      description: t.education.periods.summer.description,
+      detailedDescription: t.education.periods.summer.detailedDescription,
       links: [
         { label: "Mon avis Google", url: "https://maps.app.goo.gl/c12Ri7KysGTZ9NeG8", type: "website" }
       ],
       status: "completed"
     },
     {
-      year: "2025",
-      period: "EPITECH YEAR 3 - S1",
-      title: "Projets conséquents",
-      description: "Développement full-stack, réalisation d'un moteur graphique de jeu, projets complexes et technologies modernes.",
-      detailedDescription: "Projets comme l'AREA (plateforme d'Action-Reaction) avec OAuth, Next.js, React, Node.js et PostgreSQL. Maîtrise de Docker, des API REST et de l'architecture full-stack moderne. Ainsi que la réalisation du projet R-Type, reproduction du jeu R-Type en C++ en réseau avec un ECS maison. Réalisation de la piscine 'Survivor Seminar'",
+      year: t.education.periods.year3.year,
+      period: t.education.periods.year3.period,
+      title: t.education.periods.year3.title,
+      description: t.education.periods.year3.description,
+      detailedDescription: t.education.periods.year3.detailedDescription,
       links: [
         { label: "Projet R-TYPE", url: "https://github.com/remythai/R-TYPE", type: "github" },
         { label: "Projet AREA", url: "https://github.com/LoukaOrtegaCand/AREA", type: "github" }
@@ -87,27 +90,27 @@ export const EducationSection = (): JSX.Element => {
       status: "current"
     },
     {
-      year: "2025-2026",
-      period: "EPITECH YEAR 3 - S2",
-      title: "Stage chez Lemissa",
-      description: "Application des compétences avancées en environnement professionnel.",
-      detailedDescription: "Stage 4 mois pour approfondir mes compétences techniques et acquérir une expertise dans un domaine de spécialisation.",
+      year: t.education.periods.internship2.year,
+      period: t.education.periods.internship2.period,
+      title: t.education.periods.internship2.title,
+      description: t.education.periods.internship2.description,
+      detailedDescription: t.education.periods.internship2.detailedDescription,
       status: "upcoming"
     },
     {
-      year: "2026-2027",
-      period: "EPITECH YEAR 4",
-      title: "Expérience Internationale",
-      description: "Année à l'étranger pour ouverture culturelle et professionnelle à l'international.",
-      detailedDescription: "Semestre d'études ou stage à l'international pour découvrir de nouvelles cultures de travail et développer mon réseau professionnel mondial.",
+      year: t.education.periods.year4.year,
+      period: t.education.periods.year4.period,
+      title: t.education.periods.year4.title,
+      description: t.education.periods.year4.description,
+      detailedDescription: t.education.periods.year4.detailedDescription,
       status: "upcoming"
     },
     {
-      year: "2027-2028",
-      period: "EPITECH YEAR 5",
-      title: "Expertise & Diplôme",
-      description: "Projet de fin d'études et transition vers le monde professionnel en tant qu'ingénieur.",
-      detailedDescription: "Projet de fin d'études ambitieux et stage de fin d'études. Obtention du titre d'Expert en Technologies de l'Information (niveau 7 - Bac+5).",
+      year: t.education.periods.year5.year,
+      period: t.education.periods.year5.period,
+      title: t.education.periods.year5.title,
+      description: t.education.periods.year5.description,
+      detailedDescription: t.education.periods.year5.detailedDescription,
       status: "upcoming"
     }
   ];
@@ -311,11 +314,10 @@ export const EducationSection = (): JSX.Element => {
       <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-24 max-w-7xl">
         <div className="mb-16 md:mb-24">
           <h2 className="font-bold text-2xl md:text-3xl tracking-[5.56px] mb-6 transition-colors duration-300 text-black dark:text-white">
-            MON PARCOURS
+            {t.education.title}
           </h2>
           <p className="font-normal text-sm md:text-[15px] leading-relaxed max-w-2xl transition-colors duration-300 text-black dark:text-white">
-            De mes études secondaires à ma formation d'ingénieur chez Epitech,
-            découvrez les étapes clés qui ont façonné mon parcours professionnel.
+            {t.education.description}
           </p>
         </div>
 
@@ -372,7 +374,7 @@ export const EducationSection = (): JSX.Element => {
                           className="group flex items-center gap-2 mt-4 transition-colors duration-300 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
                         >
                           <span className="text-sm font-medium">
-                            {isExpanded ? 'Voir moins' : 'En savoir plus'}
+                            {isExpanded ? t.education.seeLess : t.education.seeMore}
                           </span>
                           <svg
                             className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}

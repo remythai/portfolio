@@ -1,18 +1,17 @@
 'use client'
 
-
 import { JSX, useRef, useEffect } from "react";
 import { gsap } from "gsap";
-
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const SocialMediaFooterSection = (): JSX.Element => {
+  const { t } = useLanguage();
   const arrowRef = useRef<SVGSVGElement>(null);
-
 
   const socialMediaLinks = [
     {
       alt: "CV",
-      href: "/cv.pdf",
+      href: t.footer.cvLink,
       icon: (
         <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
           <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19H8V17H10V19M14,19H12V10H14V19M10,15H8V13H10V15M14,7H12V5H14V7Z" />
@@ -39,11 +38,9 @@ export const SocialMediaFooterSection = (): JSX.Element => {
     },
   ];
 
-
   const handleBackToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
 
   useEffect(() => {
     if (arrowRef.current) {
@@ -51,21 +48,13 @@ export const SocialMediaFooterSection = (): JSX.Element => {
         transformOrigin: "center center"
       });
 
-
       gsap.fromTo(
         arrowRef.current,
-        {
-          rotation: 90
-        },
-        {
-          rotation: 0,
-          duration: 1,
-          ease: "power2.out"
-        }
+        { rotation: 90 },
+        { rotation: 0, duration: 1, ease: "power2.out" }
       );
     }
   }, []);
-
 
   const handleHover = (isEntering: boolean) => {
     if (arrowRef.current) {
@@ -76,7 +65,6 @@ export const SocialMediaFooterSection = (): JSX.Element => {
       });
     }
   };
-
 
   return (
     <footer className="relative w-full transition-colors duration-300 bg-[#1a1a1a] dark:bg-black py-12 md:py-16 lg:py-20">
@@ -89,7 +77,7 @@ export const SocialMediaFooterSection = (): JSX.Element => {
             className="group flex items-center gap-2 font-montserrat font-bold transition-colors duration-300 text-white hover:text-gray-300 dark:hover:text-gray-400 text-sm md:text-base tracking-wider bg-transparent border-0 cursor-pointer"
             aria-label="Back to top"
           >
-            Retourner en haut de la page
+            {t.footer.backToTop}
             <svg
               ref={arrowRef}
               className="w-4 h-4 inline-block"
@@ -101,7 +89,6 @@ export const SocialMediaFooterSection = (): JSX.Element => {
             </svg>
           </button>
         </div>
-
 
         <nav
           className="flex justify-center gap-6 md:gap-8 mb-8 md:mb-12"
@@ -121,12 +108,11 @@ export const SocialMediaFooterSection = (): JSX.Element => {
           ))}
         </nav>
 
-
         <p className="text-center font-nunito text-white text-sm md:text-base lg:text-lg">
-          <span className="font-bold">@2026 Thai Rémy </span>
+          <span className="font-bold">{t.footer.copyright}</span>
         </p>
         <p className="text-center font-nunito text-white text-sm md:text-base lg:text-lg">
-          <span className="font-normal">Fait avec Next.Js, GSAP & TailwindCSS</span>
+          <span className="font-normal">{t.footer.madeWith}</span>
         </p>
       </div>
     </footer>

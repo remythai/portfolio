@@ -5,6 +5,8 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -22,14 +24,15 @@ export const DynamicNavbar = (): JSX.Element => {
     const leftEyeContainerRef = useRef<HTMLDivElement>(null);
     const rightEyeContainerRef = useRef<HTMLDivElement>(null);
 
-    const navigationLinks = [
-        { label: "Parcours", href: "#education" },
-        { label: "A propos", href: "#about" },
-        { label: "Compétences", href: "#skills" },
-        { label: "Portfolio", href: "#portfolio" },
-        { label: "Contact", href: "#contact" },
-    ];
+    const { t } = useLanguage();
 
+    const navigationLinks = [
+        { label: t.nav.parcours, href: "#education" },
+        { label: t.nav.about, href: "#about" },
+        { label: t.nav.skills, href: "#skills" },
+        { label: t.nav.portfolio, href: "#portfolio" },
+        { label: t.nav.contact, href: "#contact" },
+    ];
     useEffect(() => {
         setMounted(true);
     }, []);
@@ -285,11 +288,11 @@ export const DynamicNavbar = (): JSX.Element => {
                 <div
                     ref={expandedNavRef}
                     className="overflow-hidden"
-                    style={{ 
-                        maxWidth: isCollapsed ? 0 : 400, 
-                        opacity: isCollapsed ? 0 : 1, 
-                        paddingLeft: isCollapsed ? 0 : 20, 
-                        paddingRight: isCollapsed ? 0 : 20 
+                    style={{
+                        maxWidth: isCollapsed ? 0 : 400,
+                        opacity: isCollapsed ? 0 : 1,
+                        paddingLeft: isCollapsed ? 0 : 20,
+                        paddingRight: isCollapsed ? 0 : 20
                     }}
                 >
                     <div className="flex flex-col gap-2 md:hidden">
@@ -358,7 +361,10 @@ export const DynamicNavbar = (): JSX.Element => {
                     </div>
                 </div>
             </div>
-            <ThemeToggle />
+            <div className="flex gap-2 md:gap-3">
+                <LanguageToggle />
+                <ThemeToggle />
+            </div>
         </nav>
     );
 };

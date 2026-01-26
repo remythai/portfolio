@@ -9,7 +9,6 @@ export function ThemeProvider({
   ...props 
 }: ComponentProps<typeof NextThemesProvider>) {
   useEffect(() => {
-    // Enlève 'light' si présent et qu'on n'est pas en dark mode
     const observer = new MutationObserver(() => {
       const classList = document.documentElement.classList;
       if (classList.contains('light')) {

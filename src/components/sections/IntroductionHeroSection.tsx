@@ -1,9 +1,11 @@
+// src/components/sections/IntroductionHeroSection.tsx
 'use client'
 
 import { JSX, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
 import { useTheme } from 'next-themes';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const IntroductionHeroSection = (): JSX.Element => {
   const imageRef = useRef<HTMLDivElement>(null);
@@ -11,11 +13,12 @@ export const IntroductionHeroSection = (): JSX.Element => {
   const buttonRef = useRef<HTMLAnchorElement>(null);
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
+  const { t } = useLanguage();
 
   const socialIcons = [
     {
       alt: "CV",
-      href: "/cv.pdf",
+      href: t.hero.cvLink,
       icon: (
         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
           <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19H8V17H10V19M14,19H12V10H14V19M10,15H8V13H10V15M14,7H12V5H14V7Z" />
@@ -90,15 +93,15 @@ export const IntroductionHeroSection = (): JSX.Element => {
           <div ref={textRef} className="w-auto flex flex-col justify-center items-start">
             <div className="text-left">
               <p className="font-raleway font-bold text-[40px] mb-6 transition-colors duration-300 text-black dark:text-white">
-                Bonjour, je suis
+                {t.hero.greeting}
               </p>
 
               <h1 className="font-raleway font-bold text-[80px] leading-tight mb-6 transition-colors duration-300 text-black dark:text-white">
-                Rémy Thai
+                {t.hero.name}
               </h1>
 
               <p className="font-raleway font-extrabold text-[25px] mb-12 transition-colors duration-300 text-[#3a3a3a] dark:text-[#6f6f6f]">
-                Développeur informatique
+                {t.hero.title}
               </p>
 
               <div className="flex gap-8 justify-start mb-8">
@@ -121,7 +124,7 @@ export const IntroductionHeroSection = (): JSX.Element => {
                 href="#education"
                 className="inline-flex items-center justify-center w-48 h-14 font-raleway font-bold text-lg bg-[#3a3a3a] dark:bg-[#d7d7d7] text-white dark:text-[#303030] shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 rounded-lg"
               >
-                Voir mon parcours
+                {t.hero.viewPath}
               </a>
             </div>
           </div>
@@ -167,15 +170,15 @@ export const IntroductionHeroSection = (): JSX.Element => {
 
         <div ref={textRef} className="absolute bottom-6 left-6 z-10">
           <p className="font-raleway font-bold text-lg mb-2 transition-colors duration-300 text-[#303030] dark:text-white">
-            Bonjour, je suis
+            {t.hero.greeting}
           </p>
 
           <h1 className="font-raleway font-bold text-4xl leading-tight mb-2 transition-colors duration-300 text-[#303030] dark:text-white">
-            Rémy Thai
+            {t.hero.name}
           </h1>
 
           <p className="font-raleway font-extrabold text-base transition-colors duration-300 text-[#505050] dark:text-[#e5e5e5]">
-            Développeur informatique
+            {t.hero.title}
           </p>
         </div>
 

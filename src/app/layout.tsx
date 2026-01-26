@@ -49,6 +49,15 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Rémy Thai - Portfolio",
   description: "Développeur informatique",
+  icons: {
+    icon: [
+      { 
+        url: '/favicon.png',
+        sizes: '500x500',
+        type: 'image/png'
+      },
+    ],
+  },
 };
 
 

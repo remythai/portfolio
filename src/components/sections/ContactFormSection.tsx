@@ -59,7 +59,6 @@ export const ContactFormSection = (): JSX.Element => {
       id="contact"
       className="relative w-full min-h-screen py-12 md:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden transition-colors duration-300 bg-white dark:bg-[#1a1a1a]"
     >
-      {/* Gradient overlay */}
       <div 
         className="absolute inset-0 pointer-events-none transition-opacity duration-300"
         style={{

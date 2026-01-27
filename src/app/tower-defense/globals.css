@@ -1,0 +1,21 @@
+@import '../../../globals.css';
+
+html, body, #__next {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+canvas {
+  display: block !important;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+}

@@ -1,5 +1,4 @@
 'use client'
-
 import { JSX, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -23,15 +22,15 @@ interface Project {
 export const ProjectGallerySection = (): JSX.Element => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [mounted, setMounted] = useState(false);
-  const [itemsToShow, setItemsToShow] = useState(6);
-  const [isExpanded, setIsExpanded] = useState(false);
-
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [currentRotation, setCurrentRotation] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
-  const projectGridRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
-
+  
   const { t } = useLanguage();
 
   const filterCategories = [
@@ -170,20 +169,7 @@ export const ProjectGallerySection = (): JSX.Element => {
   });
 
   useEffect(() => {
-    const handleResize = () => {
-      const isMobile = window.innerWidth < 768;
-      setItemsToShow(isMobile ? 3 : 6);
-      setIsExpanded(false);
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
     if (!filterRef.current || !indicatorRef.current) return;
-
     const buttons = filterRef.current.querySelectorAll("button");
     const activeButton = Array.from(buttons).find(
       (btn) => btn.getAttribute("data-filter") === activeFilter
@@ -201,34 +187,49 @@ export const ProjectGallerySection = (): JSX.Element => {
 
   const handleFilterChange = (filterId: string) => {
     setActiveFilter(filterId);
-    setIsExpanded(false);
+    setSelectedProject(null);
   };
 
-  const handleLoadMore = () => {
-    setIsExpanded(true);
-    setItemsToShow(filteredProjects.length);
+  const handleProjectClick = (project: Project) => {
+    setSelectedProject(project);
   };
 
-  const handleShowLess = () => {
-    setIsExpanded(false);
-    const isMobile = window.innerWidth < 768;
-    setItemsToShow(isMobile ? 3 : 6);
-
-    if (sectionRef.current) {
-      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+  const closeModal = () => {
+    setSelectedProject(null);
   };
 
-  const visibleProjects = filteredProjects.slice(0, itemsToShow);
-  const hasMore = filteredProjects.length > itemsToShow;
+  const togglePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const rotateNext = () => {
+    const quantity = filteredProjects.length;
+    const angleStep = 360 / quantity;
+    setCurrentRotation(prev => prev + angleStep);
+  };
+
+  const rotatePrev = () => {
+    const quantity = filteredProjects.length;
+    const angleStep = 360 / quantity;
+    setCurrentRotation(prev => prev - angleStep);
+  };
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!sectionRef.current) return;
+    if (!isPlaying) return;
+    
+    const interval = setInterval(() => {
+      setCurrentRotation(prev => prev + 0.1);
+    }, 16);
 
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
     const ctx = gsap.context(() => {
       gsap.from(titleRef.current, {
         opacity: 0,
@@ -240,46 +241,9 @@ export const ProjectGallerySection = (): JSX.Element => {
           start: "top 80%",
         },
       });
-
-      const projectCards = projectGridRef.current?.querySelectorAll(".project-card");
-      if (projectCards) {
-        gsap.from(projectCards, {
-          opacity: 0,
-          y: 80,
-          scale: 0.9,
-          stagger: 0.15,
-          duration: 0.8,
-          ease: "power3.out",
-          clearProps: "all",
-          scrollTrigger: {
-            trigger: projectGridRef.current,
-            start: "top 70%",
-          },
-        });
-      }
     }, sectionRef);
-
     return () => ctx.revert();
   }, []);
-
-  useEffect(() => {
-    const projectCards = projectGridRef.current?.querySelectorAll(".project-card");
-    if (projectCards && projectCards.length > 0) {
-      gsap.fromTo(
-        projectCards,
-        { opacity: 0, scale: 0.95, y: 20 },
-        {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          duration: 0.4,
-          stagger: 0.08,
-          ease: "power2.out",
-          clearProps: "all",
-        }
-      );
-    }
-  }, [filteredProjects, itemsToShow]);
 
   if (!mounted) {
     return <></>;
@@ -289,8 +253,9 @@ export const ProjectGallerySection = (): JSX.Element => {
     <section
       id="portfolio"
       ref={sectionRef}
-      className="relative w-full min-h-screen pb-12 md:pb-16 lg:pb-20 overflow-hidden transition-colors duration-300 bg-[#f5f5f5] dark:bg-[#303030]"
+      className="relative w-full min-h-screen pb-12 md:pb-16 lg:pb-20 overflow-hidden transition-colors duration-300 bg-[#D2D2D2] dark:bg-[#1a1a1a]"
     >
+
       <div
         ref={titleRef}
         className="relative w-full h-48 md:h-64 lg:h-80 mb-8 md:mb-12 flex items-center justify-center overflow-hidden"
@@ -304,9 +269,7 @@ export const ProjectGallerySection = (): JSX.Element => {
           quality={75}
           priority
         />
-
         <div className="absolute inset-0 transition-colors duration-300 bg-black/40 dark:bg-black/60" />
-
         <div className="relative z-10 border-4 md:border-8 border-solid border-white px-8 md:px-12 py-4 md:py-6">
           <h2 className="font-montserrat font-bold text-2xl sm:text-3xl md:text-4xl text-center tracking-[8px] md:tracking-[10.66px] text-white">
             {t.portfolio.title}
@@ -315,7 +278,7 @@ export const ProjectGallerySection = (): JSX.Element => {
       </div>
 
       <nav
-        className="max-w-2xl mx-auto px-4 mb-8 md:mb-12"
+        className="max-w-2xl mx-auto px-4 mb-8 md:mb-12 relative z-10"
         aria-label="Portfolio filter"
       >
         <div
@@ -327,114 +290,67 @@ export const ProjectGallerySection = (): JSX.Element => {
               key={category.id}
               data-filter={category.id}
               onClick={() => handleFilterChange(category.id)}
-              className={`relative px-4 md:px-6 py-2 md:py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 ${activeFilter === category.id
-                  ? "text-black dark:text-white"
-                  : "text-[#999999] dark:text-[#7c7c7c] hover:text-black dark:hover:text-white"
-                }`}
+              className={`relative px-4 md:px-6 py-2 md:py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 ${
+                activeFilter === category.id
+                  ? "text-[#25283B] dark:text-white"
+                  : "text-[#999999] dark:text-[#7c7c7c] hover:text-[#25283B] dark:hover:text-white"
+              }`}
               aria-pressed={activeFilter === category.id}
             >
               {category.label}
             </button>
           ))}
-
           <div
             ref={indicatorRef}
-            className="absolute bottom-0 h-1 transition-colors duration-300 bg-black dark:bg-white rounded-full"
+            className="absolute bottom-0 h-1 transition-colors duration-300 bg-[#25283B] dark:bg-white rounded-full"
             style={{ width: 0, left: 0 }}
           />
         </div>
       </nav>
 
-      <div className="w-full">
+      <div className="relative w-full min-h-[550px] sm:min-h-[600px] md:min-h-[700px] lg:min-h-[800px] text-center overflow-visible">
         <div
-          ref={projectGridRef}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0"
+          ref={carouselRef}
+          className="absolute w-[150px] h-[190px] sm:w-[180px] sm:h-[225px] md:w-[200px] md:h-[250px] top-[20%] sm:top-[15%] md:top-[10%] lg:top-[5%] left-1/2 -translate-x-1/2 z-20 transition-transform duration-700 ease-out"
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: `perspective(1000px) rotateX(-16deg) rotateY(${currentRotation}deg)`,
+          }}
         >
-          {visibleProjects.map((project, index) => {
-            const total = visibleProjects.length;
-            const colsPerRow = 3;
-            const fullRows = Math.floor(total / colsPerRow);
-            const remainder = total % colsPerRow;
-            const lastRowStart = fullRows * colsPerRow;
-
-            let lastRowClasses = "";
-
-            if (index >= lastRowStart && remainder > 0) {
-              if (remainder === 1) {
-                lastRowClasses = "lg:col-start-2";
-              }
-            }
-
+          {filteredProjects.map((project, index) => {
+            const quantity = filteredProjects.length;
+            const position = index + 1;
+            
             return (
               <div
                 key={project.id}
-                className={
-                  "project-card group relative aspect-[4/3] overflow-hidden transition-all duration-300 " +
-                  lastRowClasses
-                }
+                className="absolute inset-0 cursor-pointer group"
+                style={{
+                  transform: `
+                    rotateY(calc(${(position - 1) * (360 / quantity)}deg))
+                    translateZ(450px)
+                  `,
+                }}
+                onClick={() => handleProjectClick(project)}
               >
-                <Image
-                  src={project.image}
-                  alt={project.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  quality={80}
-                  loading="lazy"
-                />
-
-                <div className="absolute inset-0 transition-all duration-300 bg-black/30 dark:bg-black/40 group-hover:bg-black/60 dark:group-hover:bg-black/70" />
-
-                {project.inProgress && (
-                  <div className="absolute top-4 right-4 z-20 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-montserrat font-semibold tracking-wide">
-                    {t.portfolio.inProgress}
-                  </div>
-                )}
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
-                  {project.tags && (
-                    <p className="font-montserrat font-semibold text-blue-400 text-xs md:text-sm mb-2 tracking-wide">
-                      {project.tags}
-                    </p>
+                <div className="relative w-full h-full overflow-hidden rounded-lg shadow-2xl">
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    quality={80}
+                  />
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-300" />
+                  {project.inProgress && (
+                    <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded-full text-[10px] font-montserrat font-semibold">
+                      {t.portfolio.inProgress}
+                    </div>
                   )}
-
-                  <h3 className="font-montserrat font-bold text-white text-xl md:text-2xl mb-3 tracking-wider">
-                    {project.title}
-                  </h3>
-
-                  <p className="font-montserrat font-medium text-white/90 text-xs md:text-sm leading-relaxed mb-6 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {t.portfolio.projects[project.descriptionKey as keyof typeof t.portfolio.projects]}
-                  </p>
-
-                  <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {project.githubLink && (
-                      <>
-                        <div className="w-px h-6 bg-white/50" aria-hidden="true" />
-                        <a
-                          href={project.githubLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-montserrat font-semibold text-white text-xs tracking-widest hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-white px-4 py-2"
-                        >
-                          {t.portfolio.github}
-                        </a>
-                        <div className="w-px h-6 bg-white/50" aria-hidden="true" />
-                      </>
-                    )}
-
-                    {project.demoLink && (
-                      <>
-                        <a
-                          href={project.demoLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-montserrat font-semibold text-white text-xs tracking-widest hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-white px-4 py-2"
-                        >
-                          {t.portfolio.demo}
-                        </a>
-                        <div className="w-px h-6 bg-white/50" aria-hidden="true" />
-                      </>
-                    )}
+                  <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 bg-gradient-to-t from-black/80 to-transparent">
+                    <h3 className="font-montserrat font-bold text-white text-xs sm:text-sm md:text-base">
+                      {project.title}
+                    </h3>
                   </div>
                 </div>
               </div>
@@ -442,32 +358,114 @@ export const ProjectGallerySection = (): JSX.Element => {
           })}
         </div>
 
-        {(hasMore || isExpanded) && (
-          <div className="flex justify-center mt-8 md:mt-12">
-            {!isExpanded ? (
-              <button
-                onClick={handleLoadMore}
-                className="group relative px-8 py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 bg-black dark:bg-white text-white dark:text-black hover:bg-opacity-80 dark:hover:bg-opacity-80 rounded-md overflow-hidden"
-              >
-                {t.portfolio.seeMore}
-                <span className="absolute inset-0 border-2 border-black dark:border-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md" />
-              </button>
-            ) : (
-              <button
-                onClick={handleShowLess}
-                className="group relative px-8 py-3 font-montserrat font-semibold text-sm md:text-base tracking-wide transition-all duration-300 bg-gray-600 dark:bg-gray-400 text-white dark:text-black hover:bg-opacity-80 dark:hover:bg-opacity-80 rounded-md overflow-hidden"
-              >
-                {t.portfolio.seeLess}
-                <span className="absolute inset-0 border-2 border-gray-600 dark:border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md" />
-              </button>
-            )}
-          </div>
-        )}
+        <div className="absolute bottom-8 sm:bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-4 z-30">
+          <button
+            onClick={rotatePrev}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#303030] shadow-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-[#404040] transition-all"
+            aria-label="Projet précédent"
+          >
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-black dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-        <p className="text-center font-montserrat font-semibold text-lg md:text-xl lg:text-2xl mt-12 md:mt-16 px-4 transition-colors duration-300 text-black dark:text-white">
-          {t.portfolio.comingSoon}
-        </p>
+          <button
+            onClick={togglePlayPause}
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-[#303030] shadow-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-[#404040] transition-all"
+            aria-label={isPlaying ? "Pause" : "Play"}
+          >
+            {isPlaying ? (
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-black dark:text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-black dark:text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </button>
+
+          <button
+            onClick={rotateNext}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#303030] shadow-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-[#404040] transition-all"
+            aria-label="Projet suivant"
+          >
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-black dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       </div>
+
+      {selectedProject && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={closeModal}
+        >
+          <div 
+            className="bg-white dark:bg-[#303030] rounded-lg max-w-2xl w-full p-6 md:p-8 relative max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-2xl font-bold text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400"
+            >
+              ×
+            </button>
+            
+            <div className="relative w-full h-48 sm:h-64 md:h-80 mb-6 rounded-lg overflow-hidden">
+              <Image
+                src={selectedProject.image}
+                alt={selectedProject.title}
+                fill
+                className="object-cover"
+                quality={90}
+              />
+            </div>
+
+            {selectedProject.inProgress && (
+              <div className="inline-block bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-montserrat font-semibold mb-4">
+                {t.portfolio.inProgress}
+              </div>
+            )}
+
+            <p className="font-montserrat font-semibold text-blue-500 text-sm mb-2">
+              {selectedProject.tags}
+            </p>
+
+            <h3 className="font-montserrat font-bold text-xl sm:text-2xl md:text-3xl mb-4 text-black dark:text-white">
+              {selectedProject.title}
+            </h3>
+
+            <p className="font-montserrat text-sm sm:text-base leading-relaxed mb-6 text-black/80 dark:text-white/80">
+              {t.portfolio.projects[selectedProject.descriptionKey as keyof typeof t.portfolio.projects]}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              {selectedProject.githubLink && (
+                <a
+                  href={selectedProject.githubLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-montserrat font-semibold px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-md hover:bg-opacity-80 transition-all text-center"
+                >
+                  {t.portfolio.github}
+                </a>
+              )}
+              {selectedProject.demoLink && (
+                <a
+                  href={selectedProject.demoLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-montserrat font-semibold px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-center"
+                >
+                  {t.portfolio.demo}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -169,15 +169,24 @@ export const Preloader = () => {
           filter: 'blur(40px)',
         }}
       />
+      
       <div
         ref={textRef}
         className="absolute inset-0 flex items-center justify-center z-[10001]"
         style={{ opacity: 0 }}
       >
-        <h1 className="font-raleway font-bold text-5xl md:text-7xl lg:text-8xl text-white tracking-wider">
+        <h1 
+          className={`
+            font-raleway font-bold 
+            text-5xl md:text-7xl lg:text-8xl 
+            tracking-wider
+            ${isDark ? 'text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]' : 'text-black drop-shadow-[0_0_20px_rgba(0,0,0,0.3)]'}
+          `}
+        >
           BIENVENUE
         </h1>
       </div>
+      
       <div
         ref={cubesContainerRef}
         className="absolute inset-0 pointer-events-none z-[10000]"

@@ -10,7 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
-export const DynamicNavbar = (): JSX.Element => {
+export const Navbar = (): JSX.Element => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [isMobileExpanded, setIsMobileExpanded] = useState(false);
@@ -192,22 +192,18 @@ export const DynamicNavbar = (): JSX.Element => {
 
     const scrollToSection = (href: string) => {
         const target = document.querySelector(href);
-        if (!target) {
-            console.warn(`Target not found: ${href}`);
-            return;
-        }
+        if (!target) return;
 
-        const targetPosition = target.getBoundingClientRect().top + window.scrollY;
+        gsap.killTweensOf(window);
 
         gsap.to(window, {
-            scrollTo: {
-                y: targetPosition,
-                autoKill: true
-            },
+            scrollTo: { y: target, autoKill: false },
             duration: 1.2,
-            ease: "power3.inOut"
+            ease: "power3.inOut",
+            onComplete: () => ScrollTrigger.refresh(),
         });
     };
+
 
     const handleEyeClick = (side: 'left' | 'right') => {
         const eyeRef = side === 'left' ? leftEyeContainerRef : rightEyeContainerRef;

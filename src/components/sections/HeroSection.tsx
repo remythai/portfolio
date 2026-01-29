@@ -1,4 +1,3 @@
-// src/components/sections/IntroductionHeroSection.tsx
 'use client'
 
 import { JSX, useEffect, useRef, useState } from "react";
@@ -7,7 +6,7 @@ import { gsap } from "gsap";
 import { useTheme } from 'next-themes';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export const IntroductionHeroSection = (): JSX.Element => {
+export const HeroSection = (): JSX.Element => {
   const imageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLAnchorElement>(null);

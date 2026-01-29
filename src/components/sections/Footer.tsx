@@ -4,7 +4,7 @@ import { JSX, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export const SocialMediaFooterSection = (): JSX.Element => {
+export const Footer = (): JSX.Element => {
   const { t } = useLanguage();
   const arrowRef = useRef<SVGSVGElement>(null);
 

@@ -1,0 +1,12 @@
+{
+    "id": "standard",
+    "name": "Standard waves",
+    "waves": [
+      { "enemyId": "basic", "count": 10, "intervalSec": 0.6 },
+      { "enemyId": "basic", "count": 15, "intervalSec": 0.55 },
+      { "enemyId": "fast",  "count": 18, "intervalSec": 0.5 },
+      { "enemyId": "tank",  "count": 10, "intervalSec": 0.7 },
+      { "enemyId": "fast",  "count": 25, "intervalSec": 0.45 }
+    ]
+  }
+  

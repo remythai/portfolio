@@ -1,0 +1,8 @@
+{
+    "types": [
+      { "id": "basic", "hp": 20, "speed": 70, "color": "#ff4d4d", "radiusScale": 0.25 },
+      { "id": "fast", "hp": 15, "speed": 95, "color": "#f59e0b", "radiusScale": 0.22 },
+      { "id": "tank", "hp": 60, "speed": 55, "color": "#60a5fa", "radiusScale": 0.28 }
+    ]
+  }
+  

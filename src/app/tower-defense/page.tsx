@@ -11,12 +11,21 @@ export type MapJson = {
   waveSetId: string;
 };
 
+export type SpriteDefJson = {
+  src: string;
+  frameSize: number;
+  cols: number;
+  rows: number;
+  fps: number;
+};
+
 export type EnemyTypeJson = {
   id: string;
   hp: number;
   speed: number;
   color: string;
   radiusScale: number;
+  sprite?: SpriteDefJson;
 };
 
 export type EnemiesJson = {
@@ -45,6 +54,5 @@ export default async function Page() {
   const map = await readJson<MapJson>("src/app/tower-defense/maps/level1.json");
   const enemies = await readJson<EnemiesJson>("src/app/tower-defense/enemies/enemies.json");
   const waveSet = await readJson<WaveSetJson>(`src/app/tower-defense/waves/${map.waveSetId}.json`);
-
   return <TowerDefenseClient map={map} enemies={enemies} waveSet={waveSet} />;
 }

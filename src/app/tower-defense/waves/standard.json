@@ -1,12 +1,16 @@
 {
     "id": "standard",
-    "name": "Standard waves",
+    "name": "All enemy types demo",
     "waves": [
-      { "enemyId": "basic", "count": 10, "intervalSec": 0.6 },
-      { "enemyId": "basic", "count": 15, "intervalSec": 0.55 },
-      { "enemyId": "fast",  "count": 18, "intervalSec": 0.5 },
-      { "enemyId": "tank",  "count": 10, "intervalSec": 0.7 },
-      { "enemyId": "fast",  "count": 25, "intervalSec": 0.45 }
+      { "enemyId": "normal",      "count": 10, "intervalSec": 0.6 },
+      { "enemyId": "fast",        "count": 12, "intervalSec": 0.5 },
+      { "enemyId": "armored",     "count": 8,  "intervalSec": 0.8 },
+      { "enemyId": "cash",        "count": 14, "intervalSec": 0.55 },
+      { "enemyId": "healing",     "count": 10, "intervalSec": 0.65 },
+      { "enemyId": "invisible",   "count": 16, "intervalSec": 0.5 },
+      { "enemyId": "damageflash", "count": 12, "intervalSec": 0.6 },
+      { "enemyId": "exploding",   "count": 10, "intervalSec": 0.7 },
+      { "enemyId": "teleporting", "count": 14, "intervalSec": 0.55 }
     ]
   }
   

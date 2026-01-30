@@ -35,6 +35,14 @@ export default function TowerDefenseClient({
   const isPlaying = speedMode !== "pause";
   const speedMultiplier = speedMode === "fast" ? 2 : 1;
 
+  const tilesetGroundRef = useRef<HTMLImageElement | null>(null);
+  const spriteCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+
+  const renderRef = useRef<(() => void) | null>(null);
+  const requestRender = useCallback(() => {
+    renderRef.current?.();
+  }, []);
+
   const money = 420;
   const lives = 20;
 
@@ -44,7 +52,7 @@ export default function TowerDefenseClient({
 
   const enemyTypesById = useMemo(() => {
     const m = new Map<string, EnemyType>();
-    for (const t of enemies.types) m.set(t.id, t);
+    for (const t of enemies.types) m.set(t.id, t as EnemyType);
     return m;
   }, [enemies.types]);
 
@@ -106,6 +114,35 @@ export default function TowerDefenseClient({
     ctx.scale(dpr, dpr);
     ctx.imageSmoothingEnabled = false;
   }, []);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/textures/tileset_grass.png";
+    tilesetGroundRef.current = img;
+
+    img.addEventListener("load", requestRender);
+    return () => img.removeEventListener("load", requestRender);
+  }, [requestRender]);
+
+  useEffect(() => {
+    const urls = enemies.types.map((t) => t.sprite?.src).filter(Boolean) as string[];
+    const uniq = Array.from(new Set(urls));
+
+    const imgs: HTMLImageElement[] = [];
+
+    for (const url of uniq) {
+      if (spriteCacheRef.current.has(url)) continue;
+      const img = new Image();
+      img.src = url;
+      spriteCacheRef.current.set(url, img);
+      imgs.push(img);
+      img.addEventListener("load", requestRender);
+    }
+
+    return () => {
+      for (const img of imgs) img.removeEventListener("load", requestRender);
+    };
+  }, [enemies.types, requestRender]);
 
   const spawnEnemyFromCurrentWave = useCallback(() => {
     const world = getWorld();
@@ -173,6 +210,27 @@ export default function TowerDefenseClient({
     [getWorld, spawnEnemyFromCurrentWave, speedMultiplier, waveSet.waves]
   );
 
+  function drawEnemySprite(ctx: CanvasRenderingContext2D, e: EnemyInstance) {
+    const sprite = e.sprite;
+    if (!sprite) return;
+
+    const img = spriteCacheRef.current.get(sprite.src);
+    if (!img || !img.complete) return;
+
+    const frame = Math.floor(e.animTime * sprite.fps) % sprite.cols;
+
+    const sx = frame * sprite.frameSize;
+    const sy = e.dirRow * sprite.frameSize;
+    const sw = sprite.frameSize;
+    const sh = sprite.frameSize;
+
+    const size = e.radius * 2;
+    const dx = e.x - size / 2;
+    const dy = e.y - size / 2;
+
+    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, size, size);
+  }
+
   const render = useCallback(() => {
     const ctx = getCtx();
     const world = getWorld();
@@ -183,16 +241,25 @@ export default function TowerDefenseClient({
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, w, h);
 
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        if (grid[y][x] === map.gridLegend.wall) {
-          ctx.fillStyle = "#1f2937";
-          ctx.fillRect(offsetX + x * tileSize, offsetY + y * tileSize, tileSize, tileSize);
+    const tileset = tilesetGroundRef.current;
+    const TILE = 32;
+    const sx = 0 * TILE;
+    const sy = 7 * TILE;
+
+    if (tileset && tileset.complete) {
+      for (let gy = 0; gy < rows; gy++) {
+        for (let gx = 0; gx < cols; gx++) {
+          const dx = offsetX + gx * tileSize;
+          const dy = offsetY + gy * tileSize;
+          ctx.drawImage(tileset, sx, sy, TILE, TILE, dx, dy, tileSize, tileSize);
         }
       }
+    } else {
+      ctx.fillStyle = "#064e3b";
+      ctx.fillRect(offsetX, offsetY, cols * tileSize, rows * tileSize);
     }
 
-    ctx.strokeStyle = "#333";
+    ctx.strokeStyle = "rgba(0,0,0,0.25)";
     ctx.lineWidth = 1;
     for (let x = 0; x <= cols; x++) {
       ctx.beginPath();
@@ -208,8 +275,8 @@ export default function TowerDefenseClient({
     }
 
     if (waypoints.length >= 2) {
-      ctx.strokeStyle = "rgba(255,255,0,0.65)";
-      ctx.lineWidth = Math.max(2, tileSize * 0.18);
+      ctx.strokeStyle = "rgba(255,255,0,0.45)";
+      ctx.lineWidth = Math.max(2, tileSize * 0.12);
       ctx.lineCap = "round";
       ctx.beginPath();
       ctx.moveTo(waypoints[0].x, waypoints[0].y);
@@ -218,10 +285,13 @@ export default function TowerDefenseClient({
     }
 
     for (const e of enemiesRef.current) {
-      ctx.fillStyle = e.color;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, e.radius, 0, 2 * Math.PI);
-      ctx.fill();
+      if (e.sprite) drawEnemySprite(ctx, e);
+      else {
+        ctx.fillStyle = e.color;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius, 0, 2 * Math.PI);
+        ctx.fill();
+      }
 
       const barW = e.radius * 2;
       const barH = Math.max(3, e.radius * 0.35);
@@ -242,9 +312,14 @@ export default function TowerDefenseClient({
     ctx.fillStyle = "rgba(255,255,255,0.85)";
     ctx.font = "12px monospace";
     ctx.fillText(speedMode === "pause" ? "PAUSED" : speedMode === "play" ? "RUN x1" : "RUN x2", 10, 20);
-    ctx.fillText(`Map: ${map.name}`, 10, 36);
-    ctx.fillText(`Wave: ${waveIndexRef.current + 1}/${waveSet.waves.length}`, 10, 52);
-  }, [cols, rows, grid, getWorld, map.gridLegend.wall, map.name, speedMode, waveSet.waves]);
+    ctx.fillText(`Wave: ${waveIndexRef.current + 1}/${waveSet.waves.length}`, 10, 36);
+    ctx.fillText(`Spawns: ${spawnedInWaveRef.current}/${wave?.count ?? 0}`, 10, 52);
+    ctx.fillText(`Enemies: ${enemiesRef.current.length}`, 10, 68);
+  }, [cols, rows, getWorld, speedMode, waveSet.waves]);
+
+  useEffect(() => {
+    renderRef.current = render;
+  }, [render]);
 
   const loop = useCallback(
     (t: number) => {
@@ -282,16 +357,13 @@ export default function TowerDefenseClient({
 
     return () => {
       if (rafIdRef.current !== null) {
-        window.cancelAnimationFrame(rafIdRef.current)
+        window.cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
       }
     };
   }, [isPlaying, loop, render]);
 
-  const toggleSpeed = () => {
-    setSpeedMode((m) => (m === "pause" ? "play" : m === "play" ? "fast" : "pause"));
-  };
-
+  const toggleSpeed = () => setSpeedMode((m) => (m === "pause" ? "play" : m === "play" ? "fast" : "pause"));
   const buttonLabel = speedMode === "pause" ? "DÉMARRER (x1)" : speedMode === "play" ? "ACCÉLÉRER (x2)" : "PAUSE";
   const ButtonIcon = speedMode === "pause" ? Play : speedMode === "play" ? FastForward : Pause;
 

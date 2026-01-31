@@ -1,448 +1,720 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause, FastForward, Settings, Save } from "lucide-react";
-import type { EnemiesJson, MapJson, WaveSetJson } from "./page";
-import { clamp01 } from "./engine/math";
-import type { EnemyType, EnemyInstance } from "./engine/enemy";
-import { spawnEnemy, updateEnemies } from "./engine/enemy";
+import { FastForward, Pause, Play, Save, Settings } from "lucide-react";
 
-type Vec2 = { x: number; y: number };
+import type { EnemiesJson, MapJson, TowersJson, WaveSetJson } from "./page";
 
-export default function TowerDefenseClient({
-  map,
-  enemies,
-  waveSet
-}: {
-  map: MapJson;
-  enemies: EnemiesJson;
-  waveSet: WaveSetJson;
+import { clamp01, type Vec2 } from "./engine/math";
+import type { EnemyInstance, EnemyType } from "./engine/enemy";
+import { applyEnemyDamage, spawnEnemy, updateEnemies } from "./engine/enemy";
+import type { TowerInstance, TowerType } from "./engine/tower";
+import { placeTower, updateTowers } from "./engine/tower";
+
+type SpeedMode = "pause" | "play" | "fast";
+
+type World = {
+    canvasWidth: number;
+    canvasHeight: number;
+    tileSize: number;
+    gridOffsetX: number;
+    gridOffsetY: number;
+    waypoints: Vec2[];
+};
+
+type SpriteDrawParams = {
+    spriteSrc: string;
+    frameSize: number;
+    cols: number;
+    fps: number;
+    animTime: number;
+    row: number;
+    x: number;
+    y: number;
+    drawSize: number;
+};
+
+export default function TowerDefenseClient(props: {
+    map: MapJson;
+    enemies: EnemiesJson;
+    waveSet: WaveSetJson;
+    towers: TowersJson;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+    const { map, enemies, waveSet, towers } = props;
 
-  const rafIdRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-  const enemiesRef = useRef<EnemyInstance[]>([]);
-  const nextEnemyIdRef = useRef(1);
+    const animationFrameIdRef = useRef<number | null>(null);
+    const lastTimestampRef = useRef<number>(0);
 
-  const waveIndexRef = useRef(0);
-  const spawnedInWaveRef = useRef(0);
-  const spawnAccumulatorRef = useRef(0);
+    const enemyListRef = useRef<EnemyInstance[]>([]);
+    const nextEnemyIdRef = useRef(1);
 
-  const [speedMode, setSpeedMode] = useState<"pause" | "play" | "fast">("pause");
-  const isPlaying = speedMode !== "pause";
-  const speedMultiplier = speedMode === "fast" ? 2 : 1;
+    const towerListRef = useRef<TowerInstance[]>([]);
+    const nextTowerIdRef = useRef(1);
 
-  const tilesetGroundRef = useRef<HTMLImageElement | null>(null);
-  const spriteCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+    const waveIndexRef = useRef(0);
+    const spawnedCountInWaveRef = useRef(0);
+    const spawnTimerRef = useRef(0);
 
-  const renderRef = useRef<(() => void) | null>(null);
-  const requestRender = useCallback(() => {
-    renderRef.current?.();
-  }, []);
+    const [speedMode, setSpeedMode] = useState<SpeedMode>("pause");
+    const [selectedTowerTypeId, setSelectedTowerTypeId] = useState("ninja_basic");
 
-  const money = 420;
-  const lives = 20;
+    const [money, setMoney] = useState(420);
+    const lives = 20;
 
-  const grid = map.grid;
-  const rows = grid.length;
-  const cols = grid[0]?.length ?? 0;
+    const grid = map.grid;
+    const rowCount = grid.length;
+    const colCount = grid[0]?.length ?? 0;
 
-  const enemyTypesById = useMemo(() => {
-    const m = new Map<string, EnemyType>();
-    for (const t of enemies.types) m.set(t.id, t as EnemyType);
-    return m;
-  }, [enemies.types]);
+    const groundTilesetRef = useRef<HTMLImageElement | null>(null);
+    const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
-  const towers = useMemo(
-    () => [
-      { name: "miaou basic", cost: 50, color: "bg-blue-500" },
-      { name: "miaou basic", cost: 50, color: "bg-blue-500" },
-      { name: "miaou basic", cost: 50, color: "bg-blue-500" }
-    ],
-    []
-  );
+    const renderFnRef = useRef<(() => void) | null>(null);
+    const requestRender = useCallback(() => {
+        const renderNow = renderFnRef.current;
 
-  const getCtx = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    return canvas.getContext("2d");
-  };
+        if (renderNow === null)
+            return;
 
-  const getWorld = useCallback(() => {
-    const container = containerRef.current;
-    if (!container || !rows || !cols) return null;
+        renderNow();
+    }, []);
 
-    const w = container.clientWidth;
-    const h = container.clientHeight;
+    const speedMultiplier = speedMode === "fast" ? 2 : speedMode === "play" ? 1 : 0;
+    const isRunning = speedMultiplier > 0;
 
-    const tileSize = Math.min(w / cols, h / rows);
-    const gridW = cols * tileSize;
-    const gridH = rows * tileSize;
+    const enemyTypesById = useMemo(() => {
+        const byId = new Map<string, EnemyType>();
 
-    const offsetX = (w - gridW) / 2;
-    const offsetY = (h - gridH) / 2;
+        for (const enemyType of enemies.types)
+            byId.set(enemyType.id, enemyType as EnemyType);
 
-    const waypoints: Vec2[] = map.path.waypoints.map((p) => ({
-      x: offsetX + (p.x + 0.5) * tileSize,
-      y: offsetY + (p.y + 0.5) * tileSize
-    }));
+        return byId;
+    }, [enemies.types]);
 
-    return { w, h, tileSize, offsetX, offsetY, waypoints };
-  }, [cols, rows, map.path.waypoints]);
+    const towerTypesById = useMemo(() => {
+        const byId = new Map<string, TowerType>();
 
-  const resizeCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
+        for (const towerType of towers.types)
+            byId.set(towerType.id, towerType as unknown as TowerType);
 
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    const dpr = window.devicePixelRatio || 1;
+        return byId;
+    }, [towers.types]);
 
-    canvas.width = Math.floor(w * dpr);
-    canvas.height = Math.floor(h * dpr);
-    canvas.style.width = `${w}px`;
-    canvas.style.height = `${h}px`;
+    function getContext2D() {
+        const canvas = canvasRef.current;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+        if (canvas === null)
+            return null;
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-    ctx.imageSmoothingEnabled = false;
-  }, []);
-
-  useEffect(() => {
-    const img = new Image();
-    img.src = "/textures/tileset_grass.png";
-    tilesetGroundRef.current = img;
-
-    img.addEventListener("load", requestRender);
-    return () => img.removeEventListener("load", requestRender);
-  }, [requestRender]);
-
-  useEffect(() => {
-    const urls = enemies.types.map((t) => t.sprite?.src).filter(Boolean) as string[];
-    const uniq = Array.from(new Set(urls));
-
-    const imgs: HTMLImageElement[] = [];
-
-    for (const url of uniq) {
-      if (spriteCacheRef.current.has(url)) continue;
-      const img = new Image();
-      img.src = url;
-      spriteCacheRef.current.set(url, img);
-      imgs.push(img);
-      img.addEventListener("load", requestRender);
+        return canvas.getContext("2d");
     }
 
-    return () => {
-      for (const img of imgs) img.removeEventListener("load", requestRender);
-    };
-  }, [enemies.types, requestRender]);
+    const computeWorld = useCallback((): World | null => {
+        const container = containerRef.current;
 
-  const spawnEnemyFromCurrentWave = useCallback(() => {
-    const world = getWorld();
-    if (!world) return;
+        if (container === null || rowCount === 0 || colCount === 0)
+            return null;
 
-    const { waypoints, tileSize } = world;
-    if (waypoints.length < 2) return;
+        const canvasWidth = container.clientWidth;
+        const canvasHeight = container.clientHeight;
 
-    const wave = waveSet.waves[waveIndexRef.current];
-    if (!wave) return;
+        const tileSize = Math.min(canvasWidth / colCount, canvasHeight / rowCount);
 
-    if (spawnedInWaveRef.current >= wave.count) return;
+        const gridWidth = colCount * tileSize;
+        const gridHeight = rowCount * tileSize;
 
-    const type = enemyTypesById.get(wave.enemyId);
-    if (!type) return;
+        const gridOffsetX = (canvasWidth - gridWidth) / 2;
+        const gridOffsetY = (canvasHeight - gridHeight) / 2;
 
-    const result = spawnEnemy({
-      enemies: enemiesRef.current,
-      nextId: nextEnemyIdRef.current,
-      type,
-      start: waypoints[0],
-      tileSize
-    });
+        const waypoints: Vec2[] = map.path.waypoints.map((p) => ({
+            x: gridOffsetX + (p.x + 0.5) * tileSize,
+            y: gridOffsetY + (p.y + 0.5) * tileSize
+        }));
 
-    enemiesRef.current = result.enemies;
-    nextEnemyIdRef.current = result.nextId;
-    spawnedInWaveRef.current += 1;
-  }, [enemyTypesById, getWorld, waveSet.waves]);
+        return {
+            canvasWidth,
+            canvasHeight,
+            tileSize,
+            gridOffsetX,
+            gridOffsetY,
+            waypoints
+        };
+    }, [colCount, rowCount, map.path.waypoints]);
 
-  const update = useCallback(
-    (dt: number) => {
-      const scaledDt = dt * speedMultiplier;
+    const resizeCanvasToContainer = useCallback(() => {
+        const canvas = canvasRef.current;
+        const container = containerRef.current;
 
-      const wave = waveSet.waves[waveIndexRef.current];
-      if (!wave) return;
+        if (canvas === null || container === null)
+            return;
 
-      spawnAccumulatorRef.current += scaledDt;
-      while (spawnAccumulatorRef.current >= wave.intervalSec) {
-        spawnAccumulatorRef.current -= wave.intervalSec;
-        spawnEnemyFromCurrentWave();
-        if (spawnedInWaveRef.current >= wave.count) break;
-      }
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
 
-      const world = getWorld();
-      if (!world) return;
-      const { waypoints } = world;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
 
-      enemiesRef.current = updateEnemies({
-        enemies: enemiesRef.current,
-        dt: scaledDt,
-        waypoints
-      });
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
 
-      const waveDoneSpawning = spawnedInWaveRef.current >= wave.count;
-      const noEnemies = enemiesRef.current.length === 0;
+        const ctx = canvas.getContext("2d");
 
-      if (waveDoneSpawning && noEnemies) {
-        if (waveIndexRef.current < waveSet.waves.length - 1) {
-          waveIndexRef.current += 1;
-          spawnedInWaveRef.current = 0;
-          spawnAccumulatorRef.current = 0;
+        if (ctx === null)
+            return;
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+        ctx.imageSmoothingEnabled = false;
+    }, []);
+
+    useEffect(() => {
+        const img = new Image();
+        img.src = "/textures/tileset_grass.png";
+        groundTilesetRef.current = img;
+
+        img.addEventListener("load", requestRender);
+
+        return () => {
+            img.removeEventListener("load", requestRender);
+        };
+    }, [requestRender]);
+
+    useEffect(() => {
+        const enemyUrls = enemies.types.map((t) => t.sprite?.src).filter(Boolean) as string[];
+        const towerUrls = towers.types.map((t) => t.sprite?.src).filter(Boolean) as string[];
+
+        const uniqueUrls = Array.from(new Set([...enemyUrls, ...towerUrls]));
+        const createdImages: HTMLImageElement[] = [];
+
+        for (const url of uniqueUrls) {
+            if (imageCacheRef.current.has(url))
+                continue;
+
+            const img = new Image();
+            img.src = url;
+
+            imageCacheRef.current.set(url, img);
+            createdImages.push(img);
+
+            img.addEventListener("load", requestRender);
         }
-      }
-    },
-    [getWorld, spawnEnemyFromCurrentWave, speedMultiplier, waveSet.waves]
-  );
 
-  function drawEnemySprite(ctx: CanvasRenderingContext2D, e: EnemyInstance) {
-    const sprite = e.sprite;
-    if (!sprite) return;
+        return () => {
+            for (const img of createdImages)
+                img.removeEventListener("load", requestRender);
+        };
+    }, [enemies.types, towers.types, requestRender]);
 
-    const img = spriteCacheRef.current.get(sprite.src);
-    if (!img || !img.complete) return;
+    const spawnEnemyFromCurrentWave = useCallback(() => {
+        const world = computeWorld();
 
-    const frame = Math.floor(e.animTime * sprite.fps) % sprite.cols;
+        if (world === null || world.waypoints.length < 2)
+            return;
 
-    const sx = frame * sprite.frameSize;
-    const sy = e.dirRow * sprite.frameSize;
-    const sw = sprite.frameSize;
-    const sh = sprite.frameSize;
+        const wave = waveSet.waves[waveIndexRef.current];
 
-    const size = e.radius * 2;
-    const dx = e.x - size / 2;
-    const dy = e.y - size / 2;
+        if (!wave || spawnedCountInWaveRef.current >= wave.count)
+            return;
 
-    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, size, size);
-  }
+        const enemyType = enemyTypesById.get(wave.enemyId);
 
-  const render = useCallback(() => {
-    const ctx = getCtx();
-    const world = getWorld();
-    if (!ctx || !world) return;
+        if (!enemyType)
+            return;
 
-    const { w, h, tileSize, offsetX, offsetY, waypoints } = world;
+        const spawnResult = spawnEnemy({
+            enemies: enemyListRef.current,
+            nextId: nextEnemyIdRef.current,
+            type: enemyType,
+            start: world.waypoints[0],
+            tileSize: world.tileSize
+        });
 
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, w, h);
+        enemyListRef.current = spawnResult.enemies;
+        nextEnemyIdRef.current = spawnResult.nextId;
+        spawnedCountInWaveRef.current += 1;
+    }, [computeWorld, enemyTypesById, waveSet.waves]);
 
-    const tileset = tilesetGroundRef.current;
-    const TILE = 32;
-    const sx = 0 * TILE;
-    const sy = 7 * TILE;
+    function getCanvasMousePosition(evt: MouseEvent): Vec2 | null {
+        const canvas = canvasRef.current;
 
-    if (tileset && tileset.complete) {
-      for (let gy = 0; gy < rows; gy++) {
-        for (let gx = 0; gx < cols; gx++) {
-          const dx = offsetX + gx * tileSize;
-          const dy = offsetY + gy * tileSize;
-          ctx.drawImage(tileset, sx, sy, TILE, TILE, dx, dy, tileSize, tileSize);
+        if (canvas === null)
+            return null;
+
+        const rect = canvas.getBoundingClientRect();
+
+        return {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+        };
+    }
+
+    function getGridCellFromCanvasPosition(world: World, pos: Vec2) {
+        return {
+            gridX: Math.floor((pos.x - world.gridOffsetX) / world.tileSize),
+            gridY: Math.floor((pos.y - world.gridOffsetY) / world.tileSize)
+        };
+    }
+
+    const placeSelectedTowerAt = useCallback(
+        (gridX: number, gridY: number) => {
+            const world = computeWorld();
+
+            if (world === null)
+                return;
+
+            const insideGrid = gridX >= 0 && gridY >= 0 && gridX < colCount && gridY < rowCount;
+
+            if (!insideGrid)
+                return;
+
+            const cell = grid[gridY][gridX];
+
+            if (cell === map.gridLegend.wall || cell === map.gridLegend.path)
+                return;
+
+            const alreadyOccupied = towerListRef.current.some((t) => t.gridX === gridX && t.gridY === gridY);
+
+            if (alreadyOccupied)
+                return;
+
+            const towerType = towerTypesById.get(selectedTowerTypeId);
+
+            if (!towerType || money < towerType.cost)
+                return;
+
+            const center: Vec2 = {
+                x: world.gridOffsetX + (gridX + 0.5) * world.tileSize,
+                y: world.gridOffsetY + (gridY + 0.5) * world.tileSize
+            };
+
+            const placed = placeTower({
+                towers: towerListRef.current,
+                nextId: nextTowerIdRef.current,
+                type: towerType,
+                gridX,
+                gridY,
+                center,
+                tileSize: world.tileSize
+            });
+
+            towerListRef.current = placed.towers;
+            nextTowerIdRef.current = placed.nextId;
+
+            setMoney((prev) => prev - towerType.cost);
+            requestRender();
+        },
+        [
+            colCount,
+            rowCount,
+            computeWorld,
+            grid,
+            map.gridLegend.path,
+            map.gridLegend.wall,
+            money,
+            requestRender,
+            selectedTowerTypeId,
+            towerTypesById
+        ]
+    );
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+
+        if (canvas === null)
+            return;
+
+        const onClick = (evt: MouseEvent) => {
+            const world = computeWorld();
+
+            if (world === null)
+                return;
+
+            const pos = getCanvasMousePosition(evt);
+
+            if (pos === null)
+                return;
+
+            const cell = getGridCellFromCanvasPosition(world, pos);
+            placeSelectedTowerAt(cell.gridX, cell.gridY);
+        };
+
+        canvas.addEventListener("click", onClick);
+
+        return () => {
+            canvas.removeEventListener("click", onClick);
+        };
+    }, [computeWorld, placeSelectedTowerAt]);
+
+    const updateGame = useCallback(
+        (dt: number) => {
+            if (speedMultiplier <= 0)
+                return;
+
+            const scaledDt = dt * speedMultiplier;
+            const wave = waveSet.waves[waveIndexRef.current];
+
+            if (!wave)
+                return;
+
+            spawnTimerRef.current += scaledDt;
+
+            while (spawnTimerRef.current >= wave.intervalSec) {
+                spawnTimerRef.current -= wave.intervalSec;
+                spawnEnemyFromCurrentWave();
+
+                if (spawnedCountInWaveRef.current >= wave.count)
+                    break;
+            }
+
+            const world = computeWorld();
+
+            if (world === null)
+                return;
+
+            enemyListRef.current = updateEnemies({
+                enemies: enemyListRef.current,
+                dt: scaledDt,
+                waypoints: world.waypoints
+            });
+
+            const towerUpdate = updateTowers({
+                towers: towerListRef.current,
+                enemies: enemyListRef.current.map((e) => ({ id: e.id, x: e.x, y: e.y })),
+                dt: scaledDt
+            });
+
+            towerListRef.current = towerUpdate.towers;
+            enemyListRef.current = applyEnemyDamage(enemyListRef.current, towerUpdate.damageEvents);
+
+            const doneSpawning = spawnedCountInWaveRef.current >= wave.count;
+            const noEnemiesLeft = enemyListRef.current.length === 0;
+
+            if (!doneSpawning || !noEnemiesLeft)
+                return;
+
+            const hasNextWave = waveIndexRef.current < waveSet.waves.length - 1;
+
+            if (!hasNextWave)
+                return;
+
+            waveIndexRef.current += 1;
+            spawnedCountInWaveRef.current = 0;
+            spawnTimerRef.current = 0;
+        },
+        [computeWorld, spawnEnemyFromCurrentWave, speedMultiplier, waveSet.waves]
+    );
+
+    function drawSpriteFrame(ctx: CanvasRenderingContext2D, p: SpriteDrawParams) {
+        const img = imageCacheRef.current.get(p.spriteSrc);
+
+        if (!img || !img.complete)
+            return;
+
+        const col = Math.floor(p.animTime * p.fps) % p.cols;
+        const sx = col * p.frameSize;
+        const sy = p.row * p.frameSize;
+
+        ctx.drawImage(
+            img,
+            sx,
+            sy,
+            p.frameSize,
+            p.frameSize,
+            p.x - p.drawSize / 2,
+            p.y - p.drawSize / 2,
+            p.drawSize,
+            p.drawSize
+        );
+    }
+
+    const renderFrame = useCallback(() => {
+        const ctx = getContext2D();
+        const world = computeWorld();
+
+        if (ctx === null || world === null) {
+            return;
         }
-      }
-    } else {
-      ctx.fillStyle = "#064e3b";
-      ctx.fillRect(offsetX, offsetY, cols * tileSize, rows * tileSize);
+
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, world.canvasWidth, world.canvasHeight);
+
+        const tileset = groundTilesetRef.current;
+        const srcTileSize = 32;
+        const srcCol = 0;
+        const srcRow = 7;
+        const srcX = srcCol * srcTileSize;
+        const srcY = srcRow * srcTileSize;
+
+        if (tileset && tileset.complete) {
+            for (let gy = 0; gy < rowCount; gy++) {
+                for (let gx = 0; gx < colCount; gx++) {
+                    const dx = world.gridOffsetX + gx * world.tileSize;
+                    const dy = world.gridOffsetY + gy * world.tileSize;
+
+                    ctx.drawImage(tileset, srcX, srcY, srcTileSize, srcTileSize, dx, dy, world.tileSize, world.tileSize); // [web:304]
+                }
+            }
+        } else {
+            ctx.fillStyle = "#064e3b";
+            ctx.fillRect(world.gridOffsetX, world.gridOffsetY, colCount * world.tileSize, rowCount * world.tileSize);
+        }
+
+        ctx.strokeStyle = "rgba(0,0,0,0.25)";
+        ctx.lineWidth = 1;
+
+        for (let x = 0; x <= colCount; x++) {
+            ctx.beginPath();
+            ctx.moveTo(world.gridOffsetX + x * world.tileSize, world.gridOffsetY);
+            ctx.lineTo(world.gridOffsetX + x * world.tileSize, world.gridOffsetY + rowCount * world.tileSize);
+            ctx.stroke();
+        }
+
+        for (let y = 0; y <= rowCount; y++) {
+            ctx.beginPath();
+            ctx.moveTo(world.gridOffsetX, world.gridOffsetY + y * world.tileSize);
+            ctx.lineTo(world.gridOffsetX + colCount * world.tileSize, world.gridOffsetY + y * world.tileSize);
+            ctx.stroke();
+        }
+
+        for (const tower of towerListRef.current) {
+            drawSpriteFrame(ctx, {
+                spriteSrc: tower.sprite.src,
+                frameSize: tower.sprite.frameSize,
+                cols: tower.sprite.cols,
+                fps: tower.sprite.fps,
+                animTime: tower.animTime,
+                row: tower.dirRow,
+                x: tower.x,
+                y: tower.y,
+                drawSize: world.tileSize * 1.35
+            });
+
+            if (speedMode === "pause") {
+                ctx.strokeStyle = "rgba(59,130,246,0.35)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(tower.x, tower.y, tower.rangePx, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+        }
+
+        for (const enemy of enemyListRef.current) {
+            if (enemy.sprite) {
+                drawSpriteFrame(ctx, {
+                    spriteSrc: enemy.sprite.src,
+                    frameSize: enemy.sprite.frameSize,
+                    cols: enemy.sprite.cols,
+                    fps: enemy.sprite.fps,
+                    animTime: enemy.animTime,
+                    row: enemy.dirRow,
+                    x: enemy.x,
+                    y: enemy.y,
+                    drawSize: enemy.radius * 2
+                });
+            }
+
+            const ratio = clamp01(enemy.hp / enemy.maxHp);
+            const barWidth = enemy.radius * 2;
+            const barHeight = Math.max(3, enemy.radius * 0.35);
+
+            const barX = enemy.x - barWidth / 2;
+            const barY = enemy.y - enemy.radius - barHeight - 4;
+
+            ctx.fillStyle = "rgba(0,0,0,0.6)";
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+
+            if (ratio > 0.5)
+                ctx.fillStyle = "#22c55e";
+            else if (ratio > 0.25)
+                ctx.fillStyle = "#f59e0b";
+            else
+                ctx.fillStyle = "#ef4444";
+
+            ctx.fillRect(barX, barY, barWidth * ratio, barHeight);
+
+            ctx.strokeStyle = "rgba(255,255,255,0.25)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+        }
+
+        if (world.waypoints.length >= 2) {
+            ctx.strokeStyle = "rgba(30, 209, 33, 0.25)";
+            ctx.lineWidth = Math.max(2, world.tileSize * 0.1);
+            ctx.beginPath();
+            ctx.moveTo(world.waypoints[0].x, world.waypoints[0].y);
+
+            for (let i = 1; i < world.waypoints.length; i++)
+                ctx.lineTo(world.waypoints[i].x, world.waypoints[i].y);
+
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.font = "12px monospace";
+        ctx.fillText(`Mode: ${speedMode} (x${speedMultiplier})`, 10, 20);
+        ctx.fillText(`Selected: ${selectedTowerTypeId}`, 10, 36);
+    }, [colCount, computeWorld, money, rowCount, selectedTowerTypeId, speedMode, speedMultiplier, waveSet.waves]);
+
+    useEffect(() => {
+        renderFnRef.current = renderFrame;
+    }, [renderFrame]);
+
+    const onAnimationFrame = useCallback(
+        (timestampMs: number) => {
+            const previous = lastTimestampRef.current || timestampMs;
+            const dt = Math.min(0.05, (timestampMs - previous) / 1000);
+
+            lastTimestampRef.current = timestampMs;
+
+            updateGame(dt);
+            renderFrame();
+
+            animationFrameIdRef.current = window.requestAnimationFrame(onAnimationFrame);
+        },
+        [renderFrame, updateGame]
+    );
+
+    useEffect(() => {
+        resizeCanvasToContainer();
+        requestRender();
+
+        window.addEventListener("resize", resizeCanvasToContainer);
+
+        return () => {
+            window.removeEventListener("resize", resizeCanvasToContainer);
+        };
+    }, [requestRender, resizeCanvasToContainer]);
+
+    useEffect(() => {
+        if (!isRunning) {
+            if (animationFrameIdRef.current !== null) {
+                window.cancelAnimationFrame(animationFrameIdRef.current); // [web:9]
+                animationFrameIdRef.current = null;
+            }
+
+            requestRender();
+            return;
+        }
+
+        lastTimestampRef.current = 0;
+        animationFrameIdRef.current = window.requestAnimationFrame(onAnimationFrame);
+
+        return () => {
+            if (animationFrameIdRef.current !== null) {
+                window.cancelAnimationFrame(animationFrameIdRef.current); // [web:9]
+                animationFrameIdRef.current = null;
+            }
+        };
+    }, [isRunning, onAnimationFrame, requestRender]);
+
+    function cycleSpeedMode() {
+        setSpeedMode((prev) => {
+            if (prev === "pause")
+                return "play";
+            else if (prev === "play")
+                return "fast";
+            else
+                return "pause";
+        });
     }
 
-    ctx.strokeStyle = "rgba(0,0,0,0.25)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= cols; x++) {
-      ctx.beginPath();
-      ctx.moveTo(offsetX + x * tileSize, offsetY);
-      ctx.lineTo(offsetX + x * tileSize, offsetY + rows * tileSize);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= rows; y++) {
-      ctx.beginPath();
-      ctx.moveTo(offsetX, offsetY + y * tileSize);
-      ctx.lineTo(offsetX + cols * tileSize, offsetY + y * tileSize);
-      ctx.stroke();
-    }
+    const speedButtonLabel =
+        speedMode === "pause"
+            ? "DÉMARRER (x1)"
+            : speedMode === "play"
+                ? "ACCÉLÉRER (x2)"
+                : "PAUSE";
 
-    if (waypoints.length >= 2) {
-      ctx.strokeStyle = "rgba(255,255,0,0.45)";
-      ctx.lineWidth = Math.max(2, tileSize * 0.12);
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(waypoints[0].x, waypoints[0].y);
-      for (let i = 1; i < waypoints.length; i++) ctx.lineTo(waypoints[i].x, waypoints[i].y);
-      ctx.stroke();
-    }
+    const SpeedIcon = speedMode === "pause" ? Play : speedMode === "play" ? FastForward : Pause;
 
-    for (const e of enemiesRef.current) {
-      if (e.sprite) drawEnemySprite(ctx, e);
-      else {
-        ctx.fillStyle = e.color;
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.radius, 0, 2 * Math.PI);
-        ctx.fill();
-      }
+    return (
+        <main className="w-screen h-screen bg-gray-900 flex items-stretch overflow-hidden">
+            <section
+                ref={containerRef}
+                className="flex-1 bg-black border-8 border-yellow-500 flex items-center justify-center overflow-hidden"
+            >
+                <canvas ref={canvasRef} className="cursor-crosshair" />
+            </section>
 
-      const barW = e.radius * 2;
-      const barH = Math.max(3, e.radius * 0.35);
-      const x0 = e.x - barW / 2;
-      const y0 = e.y - e.radius - barH - 4;
-      const ratio = clamp01(e.hp / e.maxHp);
-
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(x0, y0, barW, barH);
-      ctx.fillStyle = ratio > 0.5 ? "#22c55e" : ratio > 0.25 ? "#f59e0b" : "#ef4444";
-      ctx.fillRect(x0, y0, barW * ratio, barH);
-      ctx.strokeStyle = "rgba(255,255,255,0.25)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x0, y0, barW, barH);
-    }
-
-    const wave = waveSet.waves[waveIndexRef.current];
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.font = "12px monospace";
-    ctx.fillText(speedMode === "pause" ? "PAUSED" : speedMode === "play" ? "RUN x1" : "RUN x2", 10, 20);
-    ctx.fillText(`Wave: ${waveIndexRef.current + 1}/${waveSet.waves.length}`, 10, 36);
-    ctx.fillText(`Spawns: ${spawnedInWaveRef.current}/${wave?.count ?? 0}`, 10, 52);
-    ctx.fillText(`Enemies: ${enemiesRef.current.length}`, 10, 68);
-  }, [cols, rows, getWorld, speedMode, waveSet.waves]);
-
-  useEffect(() => {
-    renderRef.current = render;
-  }, [render]);
-
-  const loop = useCallback(
-    (t: number) => {
-      const last = lastTimeRef.current || t;
-      const dt = Math.min(0.05, (t - last) / 1000);
-      lastTimeRef.current = t;
-
-      update(dt);
-      render();
-
-      rafIdRef.current = window.requestAnimationFrame(loop);
-    },
-    [render, update]
-  );
-
-  useEffect(() => {
-    resizeCanvas();
-    render();
-    window.addEventListener("resize", resizeCanvas);
-    return () => window.removeEventListener("resize", resizeCanvas);
-  }, [resizeCanvas, render]);
-
-  useEffect(() => {
-    if (!isPlaying) {
-      if (rafIdRef.current !== null) {
-        window.cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = null;
-      }
-      render();
-      return;
-    }
-
-    lastTimeRef.current = 0;
-    rafIdRef.current = window.requestAnimationFrame(loop);
-
-    return () => {
-      if (rafIdRef.current !== null) {
-        window.cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = null;
-      }
-    };
-  }, [isPlaying, loop, render]);
-
-  const toggleSpeed = () => setSpeedMode((m) => (m === "pause" ? "play" : m === "play" ? "fast" : "pause"));
-  const buttonLabel = speedMode === "pause" ? "DÉMARRER (x1)" : speedMode === "play" ? "ACCÉLÉRER (x2)" : "PAUSE";
-  const ButtonIcon = speedMode === "pause" ? Play : speedMode === "play" ? FastForward : Pause;
-
-  return (
-    <main className="w-screen h-screen bg-gray-900 flex items-stretch overflow-hidden">
-      <section ref={containerRef} className="flex-1 bg-black border-8 border-yellow-500 flex items-center justify-center overflow-hidden">
-        <canvas ref={canvasRef} className="cursor-crosshair" />
-      </section>
-
-      <aside className="w-72 bg-gray-950 border-8 border-yellow-500 flex flex-col gap-3 text-white p-4 overflow-y-auto overflow-x-hidden">
-        <div className="border-b-2 border-yellow-500 pb-2 mb-2">
-          <h1 className="font-mono text-xl font-bold text-yellow-400">TOWER DEFENSE</h1>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 mb-3">
-          <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
-            <div className="font-bold text-yellow-400 text-lg">${money}</div>
-            <div className="text-xs text-gray-400">Argent</div>
-          </div>
-          <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
-            <div className="font-bold text-blue-400 text-lg">Wave {waveIndexRef.current + 1}</div>
-            <div className="text-xs text-gray-400">Vague</div>
-          </div>
-          <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
-            <div className="font-bold text-red-400 text-lg">{lives}</div>
-            <div className="text-xs text-gray-400">Vies</div>
-          </div>
-        </div>
-
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="border-b-2 border-yellow-600 pb-2 mb-3">
-            <h3 className="font-mono text-sm font-bold text-yellow-400">TOURS DISPONIBLES</h3>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 overflow-y-auto">
-            {towers.map((tower, idx) => (
-              <button
-                key={`${tower.name}-${idx}`}
-                className="border-2 border-yellow-600 bg-gray-900 p-3 rounded hover:bg-gray-800 hover:border-yellow-400 active:bg-gray-700 transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 ${tower.color} rounded flex-shrink-0`} />
-                  <div className="text-left flex-1">
-                    <div className="font-mono text-sm font-bold">{tower.name}</div>
-                    <div className="text-yellow-400 font-bold text-lg">${tower.cost}</div>
-                  </div>
+            <aside className="w-72 bg-gray-950 border-8 border-yellow-500 flex flex-col gap-3 text-white p-4 overflow-y-auto overflow-x-hidden">
+                <div className="border-b-2 border-yellow-500 pb-2 mb-2">
+                    <h1 className="font-mono text-xl font-bold text-yellow-400">TOWER DEFENSE</h1>
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <div className="border-t-2 border-yellow-600 pt-3 mt-auto space-y-2">
-          <button
-            onClick={toggleSpeed}
-            className={`w-full p-4 border-2 font-mono font-bold flex items-center justify-center gap-2 rounded transition-all ${
-              speedMode === "fast"
-                ? "bg-red-900 border-red-600 hover:bg-red-800 text-red-100"
-                : speedMode === "play"
-                  ? "bg-yellow-900 border-yellow-600 hover:bg-yellow-800 text-yellow-100"
-                  : "bg-green-900 border-green-600 hover:bg-green-800 text-green-100"
-            }`}
-          >
-            <ButtonIcon className="w-5 h-5" />
-            {buttonLabel}
-          </button>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
+                        <div className="font-bold text-yellow-400 text-lg">${money}</div>
+                        <div className="text-xs text-gray-400">Argent</div>
+                    </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <button className="p-3 border-2 border-yellow-600 bg-gray-900 hover:bg-gray-800 rounded flex flex-col items-center transition-colors">
-              <Settings className="w-5 h-5 mb-1" />
-              <span className="text-xs">Paramètres</span>
-            </button>
-            <button className="p-3 border-2 border-yellow-600 bg-gray-900 hover:bg-gray-800 rounded flex flex-col items-center transition-colors">
-              <Save className="w-5 h-5 mb-1" />
-              <span className="text-xs">Sauvegarder</span>
-            </button>
-          </div>
-        </div>
-      </aside>
-    </main>
-  );
+                    <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
+                        <div className="font-bold text-blue-400 text-lg">Wave {waveIndexRef.current + 1}</div>
+                        <div className="text-xs text-gray-400">Vague</div>
+                    </div>
+
+                    <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
+                        <div className="font-bold text-red-400 text-lg">{lives}</div>
+                        <div className="text-xs text-gray-400">Vies</div>
+                    </div>
+                </div>
+
+                <div className="border-b-2 border-yellow-600 pb-2 mb-2">
+                    <h3 className="font-mono text-sm font-bold text-yellow-400">CHOISIR UNE TOUR</h3>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2">
+                    {towers.types.map((t) => (
+                        <button
+                            key={t.id}
+                            onClick={() => setSelectedTowerTypeId(t.id)}
+                            className={[
+                                "border-2 p-3 rounded transition-all text-left",
+                                selectedTowerTypeId === t.id
+                                    ? "border-yellow-300 bg-gray-800"
+                                    : "border-yellow-600 bg-gray-900 hover:bg-gray-800"
+                            ].join(" ")}
+                        >
+                            <div className="font-mono text-sm font-bold">{t.name}</div>
+                            <div className="text-yellow-400 font-bold">${t.cost}</div>
+                            <div className="text-xs text-gray-400">
+                                Range: {t.range} | DPS: {(t.damage * t.fireRate).toFixed(1)}
+                            </div>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="border-t-2 border-yellow-600 pt-3 mt-auto space-y-2">
+                    <button
+                        onClick={cycleSpeedMode}
+                        className={[
+                            "w-full p-4 border-2 font-mono font-bold flex items-center justify-center gap-2 rounded transition-all",
+                            speedMode === "fast"
+                                ? "bg-red-900 border-red-600 hover:bg-red-800 text-red-100"
+                                : speedMode === "play"
+                                    ? "bg-yellow-900 border-yellow-600 hover:bg-yellow-800 text-yellow-100"
+                                    : "bg-green-900 border-green-600 hover:bg-green-800 text-green-100"
+                        ].join(" ")}
+                    >
+                        <SpeedIcon className="w-5 h-5" />
+                        {speedButtonLabel}
+                    </button>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <button className="p-3 border-2 border-yellow-600 bg-gray-900 hover:bg-gray-800 rounded flex flex-col items-center transition-colors">
+                            <Settings className="w-5 h-5 mb-1" />
+                            <span className="text-xs">Paramètres</span>
+                        </button>
+
+                        <button className="p-3 border-2 border-yellow-600 bg-gray-900 hover:bg-gray-800 rounded flex flex-col items-center transition-colors">
+                            <Save className="w-5 h-5 mb-1" />
+                            <span className="text-xs">Sauvegarder</span>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    );
 }

@@ -44,9 +44,23 @@ export type WaveSetJson = {
   waves: WaveDef[];
 };
 
-async function readJson<T>(relativePath: string): Promise<T> {
-  const filePath = path.join(process.cwd(), relativePath);
-  const raw = await fs.readFile(filePath, "utf8");
+export type TowerTypeJson = {
+  id: string;
+  name: string;
+  cost: number;
+  range: number;
+  damage: number;
+  fireRate: number;
+  sprite: SpriteDefJson;
+};
+
+export type TowersJson = {
+  types: TowerTypeJson[];
+};
+
+async function readJson<T>(relativeFile: string): Promise<T> {
+  const fullPath = path.join(process.cwd(), relativeFile);
+  const raw = await fs.readFile(fullPath, "utf8");
   return JSON.parse(raw) as T;
 }
 
@@ -54,5 +68,7 @@ export default async function Page() {
   const map = await readJson<MapJson>("src/app/tower-defense/maps/level1.json");
   const enemies = await readJson<EnemiesJson>("src/app/tower-defense/enemies/enemies.json");
   const waveSet = await readJson<WaveSetJson>(`src/app/tower-defense/waves/${map.waveSetId}.json`);
-  return <TowerDefenseClient map={map} enemies={enemies} waveSet={waveSet} />;
+  const towers = await readJson<TowersJson>("src/app/tower-defense/towers/towers.json");
+
+  return <TowerDefenseClient map={map} enemies={enemies} waveSet={waveSet} towers={towers} />;
 }

@@ -2,15 +2,50 @@
     "id": "standard",
     "name": "All enemy types demo",
     "waves": [
-      { "enemyId": "normal",      "count": 10, "intervalSec": 0.6 },
-      { "enemyId": "fast",        "count": 12, "intervalSec": 0.5 },
-      { "enemyId": "armored",     "count": 8,  "intervalSec": 0.8 },
-      { "enemyId": "cash",        "count": 14, "intervalSec": 0.55 },
-      { "enemyId": "healing",     "count": 10, "intervalSec": 0.65 },
-      { "enemyId": "invisible",   "count": 16, "intervalSec": 0.5 },
-      { "enemyId": "damageflash", "count": 12, "intervalSec": 0.6 },
-      { "enemyId": "exploding",   "count": 10, "intervalSec": 0.7 },
-      { "enemyId": "teleporting", "count": 14, "intervalSec": 0.55 }
+        {
+            "enemyId": "normal",
+            "count": 10,
+            "intervalSec": 0.6
+        },
+        {
+            "enemyId": "fast",
+            "count": 12,
+            "intervalSec": 0.5
+        },
+        {
+            "enemyId": "armored",
+            "count": 8,
+            "intervalSec": 0.8
+        },
+        {
+            "enemyId": "cash",
+            "count": 14,
+            "intervalSec": 0.55
+        },
+        {
+            "enemyId": "healing",
+            "count": 10,
+            "intervalSec": 0.65
+        },
+        {
+            "enemyId": "invisible",
+            "count": 16,
+            "intervalSec": 0.5
+        },
+        {
+            "enemyId": "damageflash",
+            "count": 12,
+            "intervalSec": 0.6
+        },
+        {
+            "enemyId": "exploding",
+            "count": 10,
+            "intervalSec": 0.7
+        },
+        {
+            "enemyId": "teleporting",
+            "count": 14,
+            "intervalSec": 0.55
+        }
     ]
-  }
-  
+}

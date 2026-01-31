@@ -24,6 +24,10 @@ export const Navbar = (): JSX.Element => {
     const leftEyeContainerRef = useRef<HTMLDivElement>(null);
     const rightEyeContainerRef = useRef<HTMLDivElement>(null);
 
+
+    const [leftEyeClicks, setLeftEyeClicks] = useState(0);
+    const [rightEyeClicks, setRightEyeClicks] = useState(0);
+
     const { t } = useLanguage();
 
     const navigationLinks = [
@@ -208,6 +212,26 @@ export const Navbar = (): JSX.Element => {
     const handleEyeClick = (side: 'left' | 'right') => {
         const eyeRef = side === 'left' ? leftEyeContainerRef : rightEyeContainerRef;
         const pupilRef = side === 'left' ? leftPupilRef : rightPupilRef;
+
+        if (side === 'left') {
+            setLeftEyeClicks(prev => {
+                const newCount = prev + 1;
+                if (newCount >= 5) {
+                    window.location.href = '/tower-defense';
+                    return newCount;
+                }
+                return newCount;
+            });
+        } else {
+            setRightEyeClicks(prev => {
+                const newCount = prev + 1;
+                if (newCount >= 5) {
+                    window.location.href = '/tower-defense';
+                    return newCount;
+                }
+                return newCount;
+            });
+        }
 
         if (!eyeRef.current || !pupilRef.current) return;
 

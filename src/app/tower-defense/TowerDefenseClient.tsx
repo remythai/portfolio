@@ -115,7 +115,7 @@ export default function TowerDefenseClient(props: {
 
     const calculateWorldDimensions = useCallback((): World | null => {
         const container = containerRef.current;
-        
+
         if (container === null || mapRowCount === 0 || mapColumnCount === 0) {
             return null;
         }
@@ -171,7 +171,7 @@ export default function TowerDefenseClient(props: {
         tilesetImage.src = "/textures/tileset_grass.png";
         groundTilesetImageRef.current = tilesetImage;
         tilesetImage.addEventListener("load", requestRender);
-        
+
         return () => {
             tilesetImage.removeEventListener("load", requestRender);
         };
@@ -181,17 +181,17 @@ export default function TowerDefenseClient(props: {
         const enemySpriteUrls = enemies.types
             .map((enemyType) => enemyType.sprite?.src)
             .filter(Boolean) as string[];
-            
+
         const towerSpriteUrls = towers.types
             .map((towerType) => towerType.sprite?.src)
             .filter(Boolean) as string[];
 
         const towerUpgradeVariantUrls: string[] = [];
-        
+
         for (const towerType of towers.types) {
             const baseSpriteSource = towerType.sprite.src;
             const baseSpriteName = baseSpriteSource.replace(/_\d+-\d+\.png$/, '');
-            
+
             for (let pathOneLevel = 0; pathOneLevel <= 4; pathOneLevel++) {
                 for (let pathTwoLevel = 0; pathTwoLevel <= 4; pathTwoLevel++) {
                     if (pathOneLevel > 0 && pathTwoLevel > 0) continue;
@@ -203,7 +203,7 @@ export default function TowerDefenseClient(props: {
         const allUniqueImageUrls = Array.from(
             new Set([...enemySpriteUrls, ...towerSpriteUrls, ...towerUpgradeVariantUrls])
         );
-        
+
         const createdImages: HTMLImageElement[] = [];
 
         for (const imageUrl of allUniqueImageUrls) {
@@ -225,22 +225,22 @@ export default function TowerDefenseClient(props: {
 
     const spawnEnemyFromCurrentWave = useCallback(() => {
         const worldDimensions = calculateWorldDimensions();
-        
+
         if (worldDimensions === null || worldDimensions.waypoints.length < 2) {
             return;
         }
 
-        const currentWave = waveSet.waves[currentWaveIndexRef.current];
+        const currentWave = waveSet.waves[currentWaveIndexRef.current] as any;
         if (!currentWave) return;
 
         let enemyGroupsToSpawn: Array<{ enemyId: string; count: number }> = [];
-        
-        if ('enemyId' in currentWave) {
+
+        if ('enemyId' in currentWave && 'count' in currentWave) {
             enemyGroupsToSpawn = [{ enemyId: currentWave.enemyId, count: currentWave.count }];
-        } 
+        }
         else if ('enemies' in currentWave) {
             enemyGroupsToSpawn = currentWave.enemies;
-        } 
+        }
         else {
             return;
         }
@@ -385,7 +385,7 @@ export default function TowerDefenseClient(props: {
             damageMultiplier = 1 + (towerToUpgrade.level + 1) * 0.35;
             fireRateMultiplier = 1 + (towerToUpgrade.level + 1) * 0.25;
             rangeMultiplier = 1 + (towerToUpgrade.level + 1) * 0.1;
-        } 
+        }
         else {
             rangeMultiplier = 1 + (towerToUpgrade.level + 1) * 0.3;
             damageMultiplier = 1 + (towerToUpgrade.level + 1) * 0.2;
@@ -407,19 +407,19 @@ export default function TowerDefenseClient(props: {
 
         const baseSpriteSource = baseTowerType.sprite.src;
         const baseSpriteName = baseSpriteSource.replace(/_\d+-\d+\.png$/, '');
-        
+
         let pathOneLevelForSprite = 0;
         let pathTwoLevelForSprite = 0;
-        
+
         if (upgradedTower.upgradePath === 1) {
             pathOneLevelForSprite = upgradedTower.level;
-        } 
+        }
         else if (upgradedTower.upgradePath === 2) {
             pathTwoLevelForSprite = upgradedTower.level;
         }
-        
+
         const newSpriteSource = `${baseSpriteName}_${pathOneLevelForSprite}-${pathTwoLevelForSprite}.png`;
-        
+
         upgradedTower.sprite = {
             ...towerToUpgrade.sprite,
             src: newSpriteSource
@@ -450,10 +450,10 @@ export default function TowerDefenseClient(props: {
         const foundTower = towerListRef.current.find(
             (tower) => tower.gridX === gridX && tower.gridY === gridY
         );
-        
+
         if (foundTower) {
             setSelectedTowerId(foundTower.id);
-        } 
+        }
         else {
             setSelectedTowerId(null);
         }
@@ -478,7 +478,7 @@ export default function TowerDefenseClient(props: {
             if (towerAtPosition) {
                 setHoveredTowerId(towerAtPosition.id);
                 canvas.style.cursor = "pointer";
-            } 
+            }
             else {
                 setHoveredTowerId(null);
                 canvas.style.cursor = "crosshair";
@@ -486,7 +486,7 @@ export default function TowerDefenseClient(props: {
         };
 
         canvas.addEventListener("mousemove", handleMouseMove);
-        
+
         return () => {
             canvas.removeEventListener("mousemove", handleMouseMove);
         };
@@ -512,22 +512,22 @@ export default function TowerDefenseClient(props: {
                 const buttonY = worldDimensions.canvasHeight / 2 + 150;
 
                 const replayButtonX = worldDimensions.canvasWidth / 2 - 260;
-                const isClickingReplayButton = mousePosition.x >= replayButtonX && 
-                                                mousePosition.x <= replayButtonX + 240 &&
-                                                mousePosition.y >= buttonY && 
-                                                mousePosition.y <= buttonY + 60;
-                
+                const isClickingReplayButton = mousePosition.x >= replayButtonX &&
+                    mousePosition.x <= replayButtonX + 240 &&
+                    mousePosition.y >= buttonY &&
+                    mousePosition.y <= buttonY + 60;
+
                 if (isClickingReplayButton) {
                     window.location.reload();
                     return;
                 }
 
                 const portfolioButtonX = worldDimensions.canvasWidth / 2 + 20;
-                const isClickingPortfolioButton = mousePosition.x >= portfolioButtonX && 
-                                                   mousePosition.x <= portfolioButtonX + 240 &&
-                                                   mousePosition.y >= buttonY && 
-                                                   mousePosition.y <= buttonY + 60;
-                
+                const isClickingPortfolioButton = mousePosition.x >= portfolioButtonX &&
+                    mousePosition.x <= portfolioButtonX + 240 &&
+                    mousePosition.y >= buttonY &&
+                    mousePosition.y <= buttonY + 60;
+
                 if (isClickingPortfolioButton) {
                     window.location.href = "/";
                     return;
@@ -541,14 +541,14 @@ export default function TowerDefenseClient(props: {
 
             if (existingTower) {
                 selectTowerAtGridPosition(gridCell.gridX, gridCell.gridY);
-            } 
+            }
             else {
                 placeTowerAtGridPosition(gridCell.gridX, gridCell.gridY);
             }
         };
 
         canvas.addEventListener("click", handleClick);
-        
+
         return () => {
             canvas.removeEventListener("click", handleClick);
         };
@@ -559,16 +559,16 @@ export default function TowerDefenseClient(props: {
             if (speedMultiplier <= 0) return;
 
             const scaledDeltaTime = deltaTime * speedMultiplier;
-            const currentWave = waveSet.waves[currentWaveIndexRef.current];
+            const currentWave = waveSet.waves[currentWaveIndexRef.current] as any;
             if (!currentWave) return;
 
             let totalEnemiesInWave = 0;
-            
+
             if ('count' in currentWave) {
                 totalEnemiesInWave = currentWave.count;
-            } 
+            }
             else if ('enemies' in currentWave) {
-                totalEnemiesInWave = currentWave.enemies.reduce((sum, group) => sum + group.count, 0);
+                totalEnemiesInWave = currentWave.enemies.reduce((sum: number, group: any) => sum + group.count, 0);
             }
 
             spawnTimerRef.current += scaledDeltaTime;
@@ -597,18 +597,38 @@ export default function TowerDefenseClient(props: {
 
             const enemiesAfterDamage = applyEnemyDamage(enemyUpdate.enemies, towerUpdate.damageEvents);
 
+            // Préserver les propriétés étendues des tours
+            const updatedTowers: ExtendedTowerInstance[] = towerUpdate.towers.map((updatedTower) => {
+                const existingTower = towerListRef.current.find((t) => t.id === updatedTower.id);
+                if (existingTower) {
+                    return {
+                        ...updatedTower,
+                        level: existingTower.level,
+                        upgradePath: existingTower.upgradePath,
+                        totalCost: existingTower.totalCost
+                    } as ExtendedTowerInstance;
+                }
+                // Cela ne devrait jamais arriver, mais par sécurité
+                return {
+                    ...updatedTower,
+                    level: 0,
+                    upgradePath: 0,
+                    totalCost: 0
+                } as ExtendedTowerInstance;
+            });
+
             let moneyEarned = 0;
-            
+
             for (const damageEvent of towerUpdate.damageEvents) {
                 const enemyBefore = enemyUpdate.enemies.find((enemy) => enemy.id === damageEvent.enemyId);
                 const enemyAfter = enemiesAfterDamage.find((enemy) => enemy.id === damageEvent.enemyId);
-                
+
                 if (enemyBefore && !enemyAfter) {
                     const enemyType = enemyTypesLookup.get(enemyBefore.typeId);
                     moneyEarned += enemyType?.reward ?? 1;
                 }
             }
-            
+
             if (moneyEarned > 0) {
                 setPlayerMoney((previousMoney) => previousMoney + moneyEarned);
             }
@@ -629,7 +649,7 @@ export default function TowerDefenseClient(props: {
                     currentEnemyGroupIndexRef.current = 0;
                     spawnedInCurrentEnemyGroupRef.current = 0;
                     setCurrentWaveIndexUI(currentWaveIndexRef.current);
-                    
+
                     if (currentWaveIndexRef.current < waveSet.waves.length) {
                         setPlayerMoney((previousMoney) => previousMoney + 20);
                     }
@@ -637,7 +657,7 @@ export default function TowerDefenseClient(props: {
             }
 
             enemyListRef.current = enemiesAfterDamage;
-            towerListRef.current = towerUpdate.towers;
+            towerListRef.current = updatedTowers;
         },
         [calculateWorldDimensions, spawnEnemyFromCurrentWave, speedMultiplier, waveSet.waves, enemyTypesLookup]
     );
@@ -723,7 +743,7 @@ export default function TowerDefenseClient(props: {
 
         const currentWaveIndex = currentWaveIndexRef.current;
         const totalWaves = waveSet.waves.length;
-        
+
         if (currentWaveIndex >= totalWaves && playerLivesRef.current > 0) {
             context.fillStyle = "rgba(255, 215, 0, 0.95)";
             context.fillRect(0, 0, worldDimensions.canvasWidth, worldDimensions.canvasHeight);
@@ -805,7 +825,7 @@ export default function TowerDefenseClient(props: {
                     );
                 }
             }
-        } 
+        }
         else {
             context.fillStyle = "#064e3b";
             context.fillRect(
@@ -925,10 +945,10 @@ export default function TowerDefenseClient(props: {
 
             if (healthRatio > 0.5) {
                 context.fillStyle = "#22c55e";
-            } 
+            }
             else if (healthRatio > 0.25) {
                 context.fillStyle = "#f59e0b";
-            } 
+            }
             else {
                 context.fillStyle = "#ef4444";
             }
@@ -945,11 +965,11 @@ export default function TowerDefenseClient(props: {
             context.lineWidth = Math.max(2, worldDimensions.tileSize * 0.1);
             context.beginPath();
             context.moveTo(worldDimensions.waypoints[0].x, worldDimensions.waypoints[0].y);
-            
+
             for (let i = 1; i < worldDimensions.waypoints.length; i++) {
                 context.lineTo(worldDimensions.waypoints[i].x, worldDimensions.waypoints[i].y);
             }
-            
+
             context.stroke();
         }
 
@@ -985,7 +1005,7 @@ export default function TowerDefenseClient(props: {
         requestRender();
 
         window.addEventListener("resize", resizeCanvasToMatchContainer);
-        
+
         return () => {
             window.removeEventListener("resize", resizeCanvasToMatchContainer);
         };
@@ -1026,10 +1046,10 @@ export default function TowerDefenseClient(props: {
             ? "ACCÉLÉRER (x2)"
             : "PAUSE";
 
-    const SpeedIcon = speedMode === "pause" 
-        ? Play 
-        : speedMode === "play" 
-            ? FastForward 
+    const SpeedIcon = speedMode === "pause"
+        ? Play
+        : speedMode === "play"
+            ? FastForward
             : Pause;
 
     return (
@@ -1123,7 +1143,7 @@ export default function TowerDefenseClient(props: {
                             </div>
 
                             <div className="mb-3 flex gap-1">
-                                {[0, 1, 2, 3, 4].map((levelIndex) => (
+                                {[0, 1, 2, 3].map((levelIndex) => (
                                     <div
                                         key={levelIndex}
                                         className={[
@@ -1132,8 +1152,8 @@ export default function TowerDefenseClient(props: {
                                                 ? selectedTower.upgradePath === 1
                                                     ? "bg-red-500"
                                                     : selectedTower.upgradePath === 2
-                                                    ? "bg-blue-500"
-                                                    : "bg-gray-500"
+                                                        ? "bg-blue-500"
+                                                        : "bg-gray-500"
                                                 : "bg-gray-700 border border-gray-600"
                                         ].join(" ")}
                                     />
@@ -1143,7 +1163,7 @@ export default function TowerDefenseClient(props: {
                             {selectedTower.level === 0 && (
                                 <div className="space-y-2 mb-2">
                                     <div className="text-xs text-gray-400 mb-1">Choisir un chemin d'upgrade:</div>
-                                    
+
                                     <button
                                         onClick={() => upgradeTowerById(selectedTower.id, 1)}
                                         disabled={playerMoney < upgradeCost}

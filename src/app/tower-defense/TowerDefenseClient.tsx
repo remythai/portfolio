@@ -1,17 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FastForward, Pause, Play, Save, Settings } from "lucide-react";
+import { FastForward, Pause, Play, Save, Settings, Trash2 } from "lucide-react";
 
 import type { EnemiesJson, MapJson, TowersJson, WaveSetJson } from "./page";
 
 import { clamp01, type Vec2 } from "./engine/math";
-import type { EnemyInstance, EnemyType, EnemyUpdateResult } from "./engine/enemy";
+import type { EnemyInstance, EnemyType } from "./engine/enemy";
 import { applyEnemyDamage, spawnEnemy, updateEnemies } from "./engine/enemy";
 import type { TowerInstance, TowerType } from "./engine/tower";
 import { placeTower, updateTowers } from "./engine/tower";
 
 type SpeedMode = "pause" | "play" | "fast";
+type UpgradePath = 0 | 1 | 2;
+
+type ExtendedTowerInstance = TowerInstance & {
+    level: number;
+    upgradePath: UpgradePath;
+    totalCost: number;
+};
 
 type World = {
     canvasWidth: number;
@@ -44,83 +51,86 @@ export default function TowerDefenseClient(props: {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-
     const animationFrameIdRef = useRef<number | null>(null);
     const lastTimestampRef = useRef<number>(0);
 
     const enemyListRef = useRef<EnemyInstance[]>([]);
     const nextEnemyIdRef = useRef(1);
-
-    const towerListRef = useRef<TowerInstance[]>([]);
+    const towerListRef = useRef<ExtendedTowerInstance[]>([]);
     const nextTowerIdRef = useRef(1);
 
-    const waveIndexRef = useRef(0);
-    const spawnedCountInWaveRef = useRef(0);
+    const currentWaveIndexRef = useRef(0);
+    const totalSpawnedInCurrentWaveRef = useRef(0);
     const spawnTimerRef = useRef(0);
-
-    const livesRef = useRef(20);
+    const currentEnemyGroupIndexRef = useRef(0);
+    const spawnedInCurrentEnemyGroupRef = useRef(0);
+    const playerLivesRef = useRef(20);
 
     const [speedMode, setSpeedMode] = useState<SpeedMode>("pause");
     const [selectedTowerTypeId, setSelectedTowerTypeId] = useState("ninja_basic");
-    const [money, setMoney] = useState(420);
-    const [lives, setLives] = useState(20);
-    const [waveIndexUi, setWaveIndexUi] = useState(0);
+    const [selectedTowerId, setSelectedTowerId] = useState<number | null>(null);
+    const [playerMoney, setPlayerMoney] = useState(420);
+    const [playerLivesUI, setPlayerLivesUI] = useState(20);
+    const [currentWaveIndexUI, setCurrentWaveIndexUI] = useState(0);
+    const [hoveredTowerId, setHoveredTowerId] = useState<number | null>(null);
 
-    const grid = map.grid;
-    const rowCount = grid.length;
-    const colCount = grid[0]?.length ?? 0;
+    const mapGrid = map.grid;
+    const mapRowCount = mapGrid.length;
+    const mapColumnCount = mapGrid[0]?.length ?? 0;
 
-    const groundTilesetRef = useRef<HTMLImageElement | null>(null);
-    const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+    const groundTilesetImageRef = useRef<HTMLImageElement | null>(null);
+    const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
+    const renderFunctionRef = useRef<(() => void) | null>(null);
 
-    const renderFnRef = useRef<(() => void) | null>(null);
     const requestRender = useCallback(() => {
-        const renderNow = renderFnRef.current;
+        const renderNow = renderFunctionRef.current;
         if (renderNow === null) return;
         renderNow();
     }, []);
 
     const speedMultiplier = speedMode === "fast" ? 2 : speedMode === "play" ? 1 : 0;
-    const isRunning = speedMultiplier > 0;
+    const isGameRunning = speedMultiplier > 0;
 
-    const enemyTypesById = useMemo(() => {
-        const byId = new Map<string, EnemyType>();
-        for (const enemyType of enemies.types)
-            byId.set(enemyType.id, enemyType as EnemyType);
-        return byId;
+    const enemyTypesLookup = useMemo(() => {
+        const lookupMap = new Map<string, EnemyType>();
+        for (const enemyType of enemies.types) {
+            lookupMap.set(enemyType.id, enemyType as EnemyType);
+        }
+        return lookupMap;
     }, [enemies.types]);
 
-    const towerTypesById = useMemo(() => {
-        const byId = new Map<string, TowerType>();
-        for (const towerType of towers.types)
-            byId.set(towerType.id, towerType as unknown as TowerType);
-        return byId;
+    const towerTypesLookup = useMemo(() => {
+        const lookupMap = new Map<string, TowerType>();
+        for (const towerType of towers.types) {
+            lookupMap.set(towerType.id, towerType as unknown as TowerType);
+        }
+        return lookupMap;
     }, [towers.types]);
 
-    function getContext2D() {
+    function getCanvasContext() {
         const canvas = canvasRef.current;
         if (canvas === null) return null;
         return canvas.getContext("2d");
     }
 
-    const computeWorld = useCallback((): World | null => {
+    const calculateWorldDimensions = useCallback((): World | null => {
         const container = containerRef.current;
-        if (container === null || rowCount === 0 || colCount === 0) return null;
+        
+        if (container === null || mapRowCount === 0 || mapColumnCount === 0) {
+            return null;
+        }
 
         const canvasWidth = container.clientWidth;
         const canvasHeight = container.clientHeight;
-
-        const tileSize = Math.min(canvasWidth / colCount, canvasHeight / rowCount);
-
-        const gridWidth = colCount * tileSize;
-        const gridHeight = rowCount * tileSize;
-
+        const tileSize = Math.min(canvasWidth / mapColumnCount, canvasHeight / mapRowCount);
+        const gridWidth = mapColumnCount * tileSize;
+        const gridHeight = mapRowCount * tileSize;
         const gridOffsetX = (canvasWidth - gridWidth) / 2;
         const gridOffsetY = (canvasHeight - gridHeight) / 2;
 
-        const waypoints: Vec2[] = map.path.waypoints.map((p) => ({
-            x: gridOffsetX + (p.x + 0.5) * tileSize,
-            y: gridOffsetY + (p.y + 0.5) * tileSize
+        const waypoints: Vec2[] = map.path.waypoints.map((pathPoint) => ({
+            x: gridOffsetX + (pathPoint.x + 0.5) * tileSize,
+            y: gridOffsetY + (pathPoint.y + 0.5) * tileSize
         }));
 
         return {
@@ -131,457 +141,712 @@ export default function TowerDefenseClient(props: {
             gridOffsetY,
             waypoints
         };
-    }, [colCount, rowCount, map.path.waypoints]);
+    }, [mapColumnCount, mapRowCount, map.path.waypoints]);
 
-    const resizeCanvasToContainer = useCallback(() => {
+    const resizeCanvasToMatchContainer = useCallback(() => {
         const canvas = canvasRef.current;
         const container = containerRef.current;
 
         if (canvas === null || container === null) return;
 
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        const dpr = window.devicePixelRatio || 1;
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        const devicePixelRatio = window.devicePixelRatio || 1;
 
-        canvas.width = Math.floor(width * dpr);
-        canvas.height = Math.floor(height * dpr);
+        canvas.width = Math.floor(containerWidth * devicePixelRatio);
+        canvas.height = Math.floor(containerHeight * devicePixelRatio);
+        canvas.style.width = `${containerWidth}px`;
+        canvas.style.height = `${containerHeight}px`;
 
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
+        const context = canvas.getContext("2d");
+        if (context === null) return;
 
-        const ctx = canvas.getContext("2d");
-        if (ctx === null) return;
-
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.scale(dpr, dpr);
-        ctx.imageSmoothingEnabled = false;
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.scale(devicePixelRatio, devicePixelRatio);
+        context.imageSmoothingEnabled = false;
     }, []);
 
     useEffect(() => {
-        const img = new Image();
-        img.src = "/textures/tileset_grass.png";
-        groundTilesetRef.current = img;
-
-        img.addEventListener("load", requestRender);
+        const tilesetImage = new Image();
+        tilesetImage.src = "/textures/tileset_grass.png";
+        groundTilesetImageRef.current = tilesetImage;
+        tilesetImage.addEventListener("load", requestRender);
+        
         return () => {
-            img.removeEventListener("load", requestRender);
+            tilesetImage.removeEventListener("load", requestRender);
         };
     }, [requestRender]);
 
     useEffect(() => {
-        const enemyUrls = enemies.types.map((t) => t.sprite?.src).filter(Boolean) as string[];
-        const towerUrls = towers.types.map((t) => t.sprite?.src).filter(Boolean) as string[];
+        const enemySpriteUrls = enemies.types
+            .map((enemyType) => enemyType.sprite?.src)
+            .filter(Boolean) as string[];
+            
+        const towerSpriteUrls = towers.types
+            .map((towerType) => towerType.sprite?.src)
+            .filter(Boolean) as string[];
 
-        const uniqueUrls = Array.from(new Set([...enemyUrls, ...towerUrls]));
+        const towerUpgradeVariantUrls: string[] = [];
+        
+        for (const towerType of towers.types) {
+            const baseSpriteSource = towerType.sprite.src;
+            const baseSpriteName = baseSpriteSource.replace(/_\d+-\d+\.png$/, '');
+            
+            for (let pathOneLevel = 0; pathOneLevel <= 4; pathOneLevel++) {
+                for (let pathTwoLevel = 0; pathTwoLevel <= 4; pathTwoLevel++) {
+                    if (pathOneLevel > 0 && pathTwoLevel > 0) continue;
+                    towerUpgradeVariantUrls.push(`${baseSpriteName}_${pathOneLevel}-${pathTwoLevel}.png`);
+                }
+            }
+        }
+
+        const allUniqueImageUrls = Array.from(
+            new Set([...enemySpriteUrls, ...towerSpriteUrls, ...towerUpgradeVariantUrls])
+        );
+        
         const createdImages: HTMLImageElement[] = [];
 
-        for (const url of uniqueUrls) {
-            if (imageCacheRef.current.has(url)) continue;
+        for (const imageUrl of allUniqueImageUrls) {
+            if (imageCache.current.has(imageUrl)) continue;
 
-            const img = new Image();
-            img.src = url;
-
-            imageCacheRef.current.set(url, img);
-            createdImages.push(img);
-
-            img.addEventListener("load", requestRender);
+            const image = new Image();
+            image.src = imageUrl;
+            imageCache.current.set(imageUrl, image);
+            createdImages.push(image);
+            image.addEventListener("load", requestRender);
         }
 
         return () => {
-            for (const img of createdImages)
-                img.removeEventListener("load", requestRender);
+            for (const image of createdImages) {
+                image.removeEventListener("load", requestRender);
+            }
         };
     }, [enemies.types, towers.types, requestRender]);
 
     const spawnEnemyFromCurrentWave = useCallback(() => {
-        const world = computeWorld();
-        if (world === null || world.waypoints.length < 2) return;
+        const worldDimensions = calculateWorldDimensions();
+        
+        if (worldDimensions === null || worldDimensions.waypoints.length < 2) {
+            return;
+        }
 
-        const wave = waveSet.waves[waveIndexRef.current];
-        if (!wave || spawnedCountInWaveRef.current >= wave.count) return;
+        const currentWave = waveSet.waves[currentWaveIndexRef.current];
+        if (!currentWave) return;
 
-        const enemyType = enemyTypesById.get(wave.enemyId);
-        if (!enemyType) return;
+        let enemyGroupsToSpawn: Array<{ enemyId: string; count: number }> = [];
+        
+        if ('enemyId' in currentWave) {
+            enemyGroupsToSpawn = [{ enemyId: currentWave.enemyId, count: currentWave.count }];
+        } 
+        else if ('enemies' in currentWave) {
+            enemyGroupsToSpawn = currentWave.enemies;
+        } 
+        else {
+            return;
+        }
+
+        let currentEnemyGroup = enemyGroupsToSpawn[currentEnemyGroupIndexRef.current];
+        if (!currentEnemyGroup) return;
+
+        if (spawnedInCurrentEnemyGroupRef.current >= currentEnemyGroup.count) {
+            currentEnemyGroupIndexRef.current += 1;
+            spawnedInCurrentEnemyGroupRef.current = 0;
+            currentEnemyGroup = enemyGroupsToSpawn[currentEnemyGroupIndexRef.current];
+            if (!currentEnemyGroup) return;
+        }
+
+        const enemyTypeToSpawn = enemyTypesLookup.get(currentEnemyGroup.enemyId);
+        if (!enemyTypeToSpawn) return;
 
         const spawnResult = spawnEnemy({
             enemies: enemyListRef.current,
             nextId: nextEnemyIdRef.current,
-            type: enemyType,
-            start: world.waypoints[0],
-            tileSize: world.tileSize
+            type: enemyTypeToSpawn,
+            start: worldDimensions.waypoints[0],
+            tileSize: worldDimensions.tileSize
         });
 
         enemyListRef.current = spawnResult.enemies;
         nextEnemyIdRef.current = spawnResult.nextId;
-        spawnedCountInWaveRef.current += 1;
-    }, [computeWorld, enemyTypesById, waveSet.waves]);
+        spawnedInCurrentEnemyGroupRef.current += 1;
+        totalSpawnedInCurrentWaveRef.current += 1;
+    }, [calculateWorldDimensions, enemyTypesLookup, waveSet.waves]);
 
-    function getCanvasMousePosition(evt: MouseEvent): Vec2 | null {
+    function getMousePositionOnCanvas(mouseEvent: MouseEvent): Vec2 | null {
         const canvas = canvasRef.current;
         if (canvas === null) return null;
 
-        const rect = canvas.getBoundingClientRect();
+        const canvasBounds = canvas.getBoundingClientRect();
 
         return {
-            x: evt.clientX - rect.left,
-            y: evt.clientY - rect.top
+            x: mouseEvent.clientX - canvasBounds.left,
+            y: mouseEvent.clientY - canvasBounds.top
         };
     }
 
-    function getGridCellFromCanvasPosition(world: World, pos: Vec2) {
+    function convertCanvasPositionToGridCell(world: World, canvasPosition: Vec2) {
         return {
-            gridX: Math.floor((pos.x - world.gridOffsetX) / world.tileSize),
-            gridY: Math.floor((pos.y - world.gridOffsetY) / world.tileSize)
+            gridX: Math.floor((canvasPosition.x - world.gridOffsetX) / world.tileSize),
+            gridY: Math.floor((canvasPosition.y - world.gridOffsetY) / world.tileSize)
         };
     }
 
-    const placeSelectedTowerAt = useCallback(
+    const placeTowerAtGridPosition = useCallback(
         (gridX: number, gridY: number) => {
-            const world = computeWorld();
-            if (world === null) return;
+            const worldDimensions = calculateWorldDimensions();
+            if (worldDimensions === null) return;
 
-            const insideGrid = gridX >= 0 && gridY >= 0 && gridX < colCount && gridY < rowCount;
-            if (!insideGrid) return;
+            const isInsideGrid = gridX >= 0 && gridY >= 0 && gridX < mapColumnCount && gridY < mapRowCount;
+            if (!isInsideGrid) return;
 
-            const cell = grid[gridY][gridX];
-            if (cell === map.gridLegend.wall || cell === map.gridLegend.path) return;
+            const gridCellValue = mapGrid[gridY][gridX];
+            const isWallOrPath = gridCellValue === map.gridLegend.wall || gridCellValue === map.gridLegend.path;
+            if (isWallOrPath) return;
 
-            const alreadyOccupied = towerListRef.current.some((t) => t.gridX === gridX && t.gridY === gridY);
-            if (alreadyOccupied) return;
+            const isPositionOccupied = towerListRef.current.some(
+                (tower) => tower.gridX === gridX && tower.gridY === gridY
+            );
+            if (isPositionOccupied) return;
 
-            const towerType = towerTypesById.get(selectedTowerTypeId);
-            if (!towerType || money < towerType.cost) return;
+            const selectedTowerType = towerTypesLookup.get(selectedTowerTypeId);
+            if (!selectedTowerType || playerMoney < selectedTowerType.cost) return;
 
-            const center: Vec2 = {
-                x: world.gridOffsetX + (gridX + 0.5) * world.tileSize,
-                y: world.gridOffsetY + (gridY + 0.5) * world.tileSize
+            const towerCenterPosition: Vec2 = {
+                x: worldDimensions.gridOffsetX + (gridX + 0.5) * worldDimensions.tileSize,
+                y: worldDimensions.gridOffsetY + (gridY + 0.5) * worldDimensions.tileSize
             };
 
-            const placed = placeTower({
+            const placementResult = placeTower({
                 towers: towerListRef.current,
                 nextId: nextTowerIdRef.current,
-                type: towerType,
+                type: selectedTowerType,
                 gridX,
                 gridY,
-                center,
-                tileSize: world.tileSize
+                center: towerCenterPosition,
+                tileSize: worldDimensions.tileSize
             });
 
-            towerListRef.current = placed.towers;
-            nextTowerIdRef.current = placed.nextId;
+            const newlyPlacedTower = placementResult.towers[placementResult.towers.length - 1];
 
-            setMoney((prev) => prev - towerType.cost);
+            const extendedTower: ExtendedTowerInstance = {
+                ...newlyPlacedTower,
+                level: 0,
+                upgradePath: 0,
+                totalCost: selectedTowerType.cost
+            };
+
+            towerListRef.current = [...towerListRef.current, extendedTower];
+            nextTowerIdRef.current = placementResult.nextId;
+
+            setPlayerMoney((previousMoney) => previousMoney - selectedTowerType.cost);
             requestRender();
         },
         [
-            colCount,
-            rowCount,
-            computeWorld,
-            grid,
+            mapColumnCount,
+            mapRowCount,
+            calculateWorldDimensions,
+            mapGrid,
             map.gridLegend.path,
             map.gridLegend.wall,
-            money,
+            playerMoney,
             requestRender,
             selectedTowerTypeId,
-            towerTypesById
+            towerTypesLookup
         ]
     );
+
+    const calculateUpgradeCost = (tower: ExtendedTowerInstance): number => {
+        const baseTowerType = towerTypesLookup.get(tower.typeId);
+        if (!baseTowerType) return 999;
+        return Math.floor(baseTowerType.cost * (1.5 ** (tower.level + 1)));
+    };
+
+    const calculateSellValue = (tower: ExtendedTowerInstance): number => {
+        return Math.floor(tower.totalCost * 0.7);
+    };
+
+    const upgradeTowerById = useCallback((towerId: number, upgradePath: 1 | 2) => {
+        const towerIndex = towerListRef.current.findIndex((tower) => tower.id === towerId);
+        if (towerIndex === -1) return;
+
+        const towerToUpgrade = towerListRef.current[towerIndex];
+        const upgradeCost = calculateUpgradeCost(towerToUpgrade);
+        if (playerMoney < upgradeCost) return;
+
+        const newUpgradePath = towerToUpgrade.level === 0 ? upgradePath : towerToUpgrade.upgradePath;
+        const baseTowerType = towerTypesLookup.get(towerToUpgrade.typeId);
+        if (!baseTowerType) return;
+
+        let damageMultiplier = 1;
+        let rangeMultiplier = 1;
+        let fireRateMultiplier = 1;
+
+        if (newUpgradePath === 1) {
+            damageMultiplier = 1 + (towerToUpgrade.level + 1) * 0.35;
+            fireRateMultiplier = 1 + (towerToUpgrade.level + 1) * 0.25;
+            rangeMultiplier = 1 + (towerToUpgrade.level + 1) * 0.1;
+        } 
+        else {
+            rangeMultiplier = 1 + (towerToUpgrade.level + 1) * 0.3;
+            damageMultiplier = 1 + (towerToUpgrade.level + 1) * 0.2;
+            fireRateMultiplier = 1 + (towerToUpgrade.level + 1) * 0.2;
+        }
+
+        const worldDimensions = calculateWorldDimensions();
+        if (!worldDimensions) return;
+
+        const upgradedTower: ExtendedTowerInstance = {
+            ...towerToUpgrade,
+            level: towerToUpgrade.level + 1,
+            upgradePath: newUpgradePath,
+            totalCost: towerToUpgrade.totalCost + upgradeCost,
+            damage: Math.round(baseTowerType.damage * damageMultiplier),
+            fireRate: baseTowerType.fireRate * fireRateMultiplier,
+            rangePx: baseTowerType.range * worldDimensions.tileSize * rangeMultiplier
+        };
+
+        const baseSpriteSource = baseTowerType.sprite.src;
+        const baseSpriteName = baseSpriteSource.replace(/_\d+-\d+\.png$/, '');
+        
+        let pathOneLevelForSprite = 0;
+        let pathTwoLevelForSprite = 0;
+        
+        if (upgradedTower.upgradePath === 1) {
+            pathOneLevelForSprite = upgradedTower.level;
+        } 
+        else if (upgradedTower.upgradePath === 2) {
+            pathTwoLevelForSprite = upgradedTower.level;
+        }
+        
+        const newSpriteSource = `${baseSpriteName}_${pathOneLevelForSprite}-${pathTwoLevelForSprite}.png`;
+        
+        upgradedTower.sprite = {
+            ...towerToUpgrade.sprite,
+            src: newSpriteSource
+        };
+
+        const updatedTowerList = [...towerListRef.current];
+        updatedTowerList[towerIndex] = upgradedTower;
+        towerListRef.current = updatedTowerList;
+
+        setPlayerMoney((previousMoney) => previousMoney - upgradeCost);
+        requestRender();
+    }, [playerMoney, calculateWorldDimensions, towerTypesLookup, requestRender]);
+
+    const sellTowerById = useCallback((towerId: number) => {
+        const towerIndex = towerListRef.current.findIndex((tower) => tower.id === towerId);
+        if (towerIndex === -1) return;
+
+        const towerToSell = towerListRef.current[towerIndex];
+        const sellValue = calculateSellValue(towerToSell);
+
+        towerListRef.current = towerListRef.current.filter((tower) => tower.id !== towerId);
+        setPlayerMoney((previousMoney) => previousMoney + sellValue);
+        setSelectedTowerId(null);
+        requestRender();
+    }, [requestRender]);
+
+    const selectTowerAtGridPosition = useCallback((gridX: number, gridY: number) => {
+        const foundTower = towerListRef.current.find(
+            (tower) => tower.gridX === gridX && tower.gridY === gridY
+        );
+        
+        if (foundTower) {
+            setSelectedTowerId(foundTower.id);
+        } 
+        else {
+            setSelectedTowerId(null);
+        }
+    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (canvas === null) return;
 
-        const handleClick = (evt: MouseEvent) => {
-            const world = computeWorld();
-            if (world === null) return;
+        const handleMouseMove = (mouseEvent: MouseEvent) => {
+            const worldDimensions = calculateWorldDimensions();
+            if (worldDimensions === null) return;
 
-            const pos = getCanvasMousePosition(evt);
-            if (pos === null) return;
+            const mousePosition = getMousePositionOnCanvas(mouseEvent);
+            if (mousePosition === null) return;
 
-            const isGameOver = livesRef.current === 0;
-            const currentWaveIndex = waveIndexRef.current;
+            const gridCell = convertCanvasPositionToGridCell(worldDimensions, mousePosition);
+            const towerAtPosition = towerListRef.current.find(
+                (tower) => tower.gridX === gridCell.gridX && tower.gridY === gridCell.gridY
+            );
+
+            if (towerAtPosition) {
+                setHoveredTowerId(towerAtPosition.id);
+                canvas.style.cursor = "pointer";
+            } 
+            else {
+                setHoveredTowerId(null);
+                canvas.style.cursor = "crosshair";
+            }
+        };
+
+        canvas.addEventListener("mousemove", handleMouseMove);
+        
+        return () => {
+            canvas.removeEventListener("mousemove", handleMouseMove);
+        };
+    }, [calculateWorldDimensions]);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (canvas === null) return;
+
+        const handleClick = (mouseEvent: MouseEvent) => {
+            const worldDimensions = calculateWorldDimensions();
+            if (worldDimensions === null) return;
+
+            const mousePosition = getMousePositionOnCanvas(mouseEvent);
+            if (mousePosition === null) return;
+
+            const isGameOver = playerLivesRef.current === 0;
+            const currentWaveIndex = currentWaveIndexRef.current;
             const totalWaves = waveSet.waves.length;
             const isVictory = currentWaveIndex >= totalWaves;
 
             if (isGameOver || isVictory) {
-                const btnY = world.canvasHeight / 2 + 150;
+                const buttonY = worldDimensions.canvasHeight / 2 + 150;
 
-                const replayBtnX = world.canvasWidth / 2 - 260;
-                if (pos.x >= replayBtnX && pos.x <= replayBtnX + 240 &&
-                    pos.y >= btnY && pos.y <= btnY + 60) {
+                const replayButtonX = worldDimensions.canvasWidth / 2 - 260;
+                const isClickingReplayButton = mousePosition.x >= replayButtonX && 
+                                                mousePosition.x <= replayButtonX + 240 &&
+                                                mousePosition.y >= buttonY && 
+                                                mousePosition.y <= buttonY + 60;
+                
+                if (isClickingReplayButton) {
                     window.location.reload();
                     return;
                 }
 
-                const portfolioBtnX = world.canvasWidth / 2 + 20;
-                if (pos.x >= portfolioBtnX && pos.x <= portfolioBtnX + 240 &&
-                    pos.y >= btnY && pos.y <= btnY + 60) {
+                const portfolioButtonX = worldDimensions.canvasWidth / 2 + 20;
+                const isClickingPortfolioButton = mousePosition.x >= portfolioButtonX && 
+                                                   mousePosition.x <= portfolioButtonX + 240 &&
+                                                   mousePosition.y >= buttonY && 
+                                                   mousePosition.y <= buttonY + 60;
+                
+                if (isClickingPortfolioButton) {
                     window.location.href = "/";
                     return;
                 }
             }
 
-            const cell = getGridCellFromCanvasPosition(world, pos);
-            placeSelectedTowerAt(cell.gridX, cell.gridY);
+            const gridCell = convertCanvasPositionToGridCell(worldDimensions, mousePosition);
+            const existingTower = towerListRef.current.find(
+                (tower) => tower.gridX === gridCell.gridX && tower.gridY === gridCell.gridY
+            );
+
+            if (existingTower) {
+                selectTowerAtGridPosition(gridCell.gridX, gridCell.gridY);
+            } 
+            else {
+                placeTowerAtGridPosition(gridCell.gridX, gridCell.gridY);
+            }
         };
 
         canvas.addEventListener("click", handleClick);
+        
         return () => {
             canvas.removeEventListener("click", handleClick);
         };
-    }, [computeWorld, placeSelectedTowerAt, waveSet.waves.length]);
+    }, [calculateWorldDimensions, placeTowerAtGridPosition, selectTowerAtGridPosition, waveSet.waves.length]);
 
     const updateGame = useCallback(
-        (dt: number) => {
+        (deltaTime: number) => {
             if (speedMultiplier <= 0) return;
 
-            const scaledDt = dt * speedMultiplier;
-            const wave = waveSet.waves[waveIndexRef.current];
-            if (!wave) return;
+            const scaledDeltaTime = deltaTime * speedMultiplier;
+            const currentWave = waveSet.waves[currentWaveIndexRef.current];
+            if (!currentWave) return;
 
-            spawnTimerRef.current += scaledDt;
-
-            while (spawnTimerRef.current >= wave.intervalSec) {
-                spawnTimerRef.current -= wave.intervalSec;
-                spawnEnemyFromCurrentWave();
-
-                if (spawnedCountInWaveRef.current >= wave.count) break;
+            let totalEnemiesInWave = 0;
+            
+            if ('count' in currentWave) {
+                totalEnemiesInWave = currentWave.count;
+            } 
+            else if ('enemies' in currentWave) {
+                totalEnemiesInWave = currentWave.enemies.reduce((sum, group) => sum + group.count, 0);
             }
 
-            const world = computeWorld();
-            if (world === null) return;
+            spawnTimerRef.current += scaledDeltaTime;
+
+            while (spawnTimerRef.current >= currentWave.intervalSec) {
+                spawnTimerRef.current -= currentWave.intervalSec;
+                spawnEnemyFromCurrentWave();
+
+                if (totalSpawnedInCurrentWaveRef.current >= totalEnemiesInWave) break;
+            }
+
+            const worldDimensions = calculateWorldDimensions();
+            if (worldDimensions === null) return;
 
             const enemyUpdate = updateEnemies({
                 enemies: enemyListRef.current,
-                dt: scaledDt,
-                waypoints: world.waypoints
+                dt: scaledDeltaTime,
+                waypoints: worldDimensions.waypoints
             });
 
             const towerUpdate = updateTowers({
                 towers: towerListRef.current,
-                enemies: enemyUpdate.enemies.map((e) => ({ id: e.id, x: e.x, y: e.y })),
-                dt: scaledDt
+                enemies: enemyUpdate.enemies.map((enemy) => ({ id: enemy.id, x: enemy.x, y: enemy.y })),
+                dt: scaledDeltaTime
             });
 
             const enemiesAfterDamage = applyEnemyDamage(enemyUpdate.enemies, towerUpdate.damageEvents);
 
             let moneyEarned = 0;
-            for (const event of towerUpdate.damageEvents) {
-                const killedEnemy = enemiesAfterDamage.find(e => e.id === event.enemyId);
-                if (killedEnemy) {
-                    const type = enemyTypesById.get(killedEnemy.typeId);
-                    moneyEarned += type?.reward ?? 1;
+            
+            for (const damageEvent of towerUpdate.damageEvents) {
+                const enemyBefore = enemyUpdate.enemies.find((enemy) => enemy.id === damageEvent.enemyId);
+                const enemyAfter = enemiesAfterDamage.find((enemy) => enemy.id === damageEvent.enemyId);
+                
+                if (enemyBefore && !enemyAfter) {
+                    const enemyType = enemyTypesLookup.get(enemyBefore.typeId);
+                    moneyEarned += enemyType?.reward ?? 1;
                 }
             }
-            if (moneyEarned > 0)
-                setMoney(prev => prev + moneyEarned);
-
-            if (enemyUpdate.escapedCount > 0) {
-                livesRef.current = Math.max(0, livesRef.current - enemyUpdate.escapedCount);
-                setLives(livesRef.current);
+            
+            if (moneyEarned > 0) {
+                setPlayerMoney((previousMoney) => previousMoney + moneyEarned);
             }
 
-            const doneSpawning = spawnedCountInWaveRef.current >= wave.count;
+            if (enemyUpdate.escapedCount > 0) {
+                playerLivesRef.current = Math.max(0, playerLivesRef.current - enemyUpdate.escapedCount);
+                setPlayerLivesUI(playerLivesRef.current);
+            }
+
+            const doneSpawning = totalSpawnedInCurrentWaveRef.current >= totalEnemiesInWave;
             const noEnemiesLeft = enemiesAfterDamage.length === 0;
 
             if (doneSpawning && noEnemiesLeft) {
-                if (waveIndexRef.current < waveSet.waves.length) {
-                    waveIndexRef.current += 1;
-                    spawnedCountInWaveRef.current = 0;
+                if (currentWaveIndexRef.current < waveSet.waves.length) {
+                    currentWaveIndexRef.current += 1;
+                    totalSpawnedInCurrentWaveRef.current = 0;
                     spawnTimerRef.current = 0;
-                    setWaveIndexUi(waveIndexRef.current);
+                    currentEnemyGroupIndexRef.current = 0;
+                    spawnedInCurrentEnemyGroupRef.current = 0;
+                    setCurrentWaveIndexUI(currentWaveIndexRef.current);
                     
-                    if (waveIndexRef.current < waveSet.waves.length)
-                        setMoney(prev => prev + 20);
+                    if (currentWaveIndexRef.current < waveSet.waves.length) {
+                        setPlayerMoney((previousMoney) => previousMoney + 20);
+                    }
                 }
             }
 
             enemyListRef.current = enemiesAfterDamage;
             towerListRef.current = towerUpdate.towers;
         },
-        [computeWorld, spawnEnemyFromCurrentWave, speedMultiplier, waveSet.waves, enemyTypesById]
+        [calculateWorldDimensions, spawnEnemyFromCurrentWave, speedMultiplier, waveSet.waves, enemyTypesLookup]
     );
 
-    function drawSpriteFrame(ctx: CanvasRenderingContext2D, p: SpriteDrawParams) {
-        const img = imageCacheRef.current.get(p.spriteSrc);
-        if (!img || !img.complete) return;
+    function drawSpriteFrame(context: CanvasRenderingContext2D, params: SpriteDrawParams) {
+        const spriteImage = imageCache.current.get(params.spriteSrc);
+        if (!spriteImage || !spriteImage.complete) return;
 
-        const col = Math.floor(p.animTime * p.fps) % p.cols;
-        const sx = col * p.frameSize;
-        const sy = p.row * p.frameSize;
+        const currentColumn = Math.floor(params.animTime * params.fps) % params.cols;
+        const sourceX = currentColumn * params.frameSize;
+        const sourceY = params.row * params.frameSize;
 
-        ctx.drawImage(
-            img,
-            sx, sy, p.frameSize, p.frameSize,
-            p.x - p.drawSize / 2,
-            p.y - p.drawSize / 2,
-            p.drawSize, p.drawSize
+        context.drawImage(
+            spriteImage,
+            sourceX,
+            sourceY,
+            params.frameSize,
+            params.frameSize,
+            params.x - params.drawSize / 2,
+            params.y - params.drawSize / 2,
+            params.drawSize,
+            params.drawSize
         );
     }
 
     const renderFrame = useCallback(() => {
-        const ctx = getContext2D();
-        const world = computeWorld();
+        const context = getCanvasContext();
+        const worldDimensions = calculateWorldDimensions();
 
-        if (ctx === null || world === null) {
+        if (context === null || worldDimensions === null) return;
+
+        if (playerLivesRef.current === 0) {
+            context.fillStyle = "rgba(139, 0, 0, 0.95)";
+            context.fillRect(0, 0, worldDimensions.canvasWidth, worldDimensions.canvasHeight);
+
+            context.strokeStyle = "#ff3333";
+            context.lineWidth = 8;
+            context.strokeRect(20, 20, worldDimensions.canvasWidth - 40, worldDimensions.canvasHeight - 40);
+
+            context.fillStyle = "#ff6666";
+            context.font = "bold 72px monospace";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.shadowColor = "rgba(255, 0, 0, 0.8)";
+            context.shadowBlur = 20;
+            context.fillText("GAME OVER", worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 - 80);
+
+            context.shadowBlur = 0;
+            context.fillStyle = "#ff9999";
+            context.font = "bold 32px monospace";
+            context.fillText("Toutes vos tours ont été dépassées", worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 - 20);
+
+            context.fillStyle = "#ffffff";
+            context.font = "24px monospace";
+            context.fillText(`Wave ${currentWaveIndexUI + 1} terminée`, worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 + 50);
+            context.fillText(`Argent final: $${playerMoney}`, worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 + 90);
+
+            const buttonY = worldDimensions.canvasHeight / 2 + 150;
+
+            context.fillStyle = "#ff4444";
+            context.fillRect(worldDimensions.canvasWidth / 2 - 260, buttonY, 240, 60);
+            context.strokeStyle = "#ffffff";
+            context.lineWidth = 3;
+            context.strokeRect(worldDimensions.canvasWidth / 2 - 260, buttonY, 240, 60);
+
+            context.fillStyle = "#ffffff";
+            context.font = "bold 22px monospace";
+            context.textBaseline = "middle";
+            context.fillText("REJOUER", worldDimensions.canvasWidth / 2 - 140, buttonY + 30);
+
+            context.fillStyle = "#4a90e2";
+            context.fillRect(worldDimensions.canvasWidth / 2 + 20, buttonY, 240, 60);
+            context.strokeStyle = "#ffffff";
+            context.lineWidth = 3;
+            context.strokeRect(worldDimensions.canvasWidth / 2 + 20, buttonY, 240, 60);
+
+            context.fillStyle = "#ffffff";
+            context.fillText("PORTFOLIO", worldDimensions.canvasWidth / 2 + 140, buttonY + 30);
+            context.textAlign = "left";
+            context.textBaseline = "alphabetic";
             return;
         }
 
-        if (livesRef.current === 0) {
-            const gradient = ctx.createLinearGradient(0, 0, 0, world.canvasHeight);
-            gradient.addColorStop(0, "rgba(139, 0, 0, 0.95)");
-            gradient.addColorStop(1, "rgba(78, 0, 0, 0.95)");
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, world.canvasWidth, world.canvasHeight);
-
-            ctx.strokeStyle = "#ff3333";
-            ctx.lineWidth = 8;
-            ctx.strokeRect(20, 20, world.canvasWidth - 40, world.canvasHeight - 40);
-
-            ctx.fillStyle = "#ff6666";
-            ctx.font = "bold 72px monospace";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.shadowColor = "rgba(255, 0, 0, 0.8)";
-            ctx.shadowBlur = 20;
-            ctx.fillText("GAME OVER", world.canvasWidth / 2, world.canvasHeight / 2 - 80);
-
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = "#ff9999";
-            ctx.font = "bold 32px monospace";
-            ctx.fillText("Toutes vos tours ont été dépassées", world.canvasWidth / 2, world.canvasHeight / 2 - 20);
-
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "24px monospace";
-            ctx.fillText(`Wave ${waveIndexUi + 1} terminée`, world.canvasWidth / 2, world.canvasHeight / 2 + 50);
-            ctx.fillText(`Argent final: $${money}`, world.canvasWidth / 2, world.canvasHeight / 2 + 90);
-
-            const btnY = world.canvasHeight / 2 + 150;
-
-            ctx.fillStyle = "#ff4444";
-            ctx.fillRect(world.canvasWidth / 2 - 260, btnY, 240, 60);
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 3;
-            ctx.strokeRect(world.canvasWidth / 2 - 260, btnY, 240, 60);
-
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 22px monospace";
-            ctx.textBaseline = "middle";
-            ctx.fillText("REJOUER", world.canvasWidth / 2 - 140, btnY + 30);
-
-            ctx.fillStyle = "#4a90e2";
-            ctx.fillRect(world.canvasWidth / 2 + 20, btnY, 240, 60);
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 3;
-            ctx.strokeRect(world.canvasWidth / 2 + 20, btnY, 240, 60);
-
-            ctx.fillStyle = "#ffffff";
-            ctx.fillText("PORTFOLIO", world.canvasWidth / 2 + 140, btnY + 30);
-            ctx.textAlign = "left";
-            ctx.textBaseline = "alphabetic";
-            return;
-        }
-
-        const currentWaveIndex = waveIndexRef.current;
+        const currentWaveIndex = currentWaveIndexRef.current;
         const totalWaves = waveSet.waves.length;
-        if (currentWaveIndex >= totalWaves && livesRef.current > 0) {
-            const gradient = ctx.createLinearGradient(0, 0, 0, world.canvasHeight);
-            gradient.addColorStop(0, "rgba(255, 215, 0, 0.95)");
-            gradient.addColorStop(1, "rgba(184, 134, 11, 0.95)");
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, world.canvasWidth, world.canvasHeight);
+        
+        if (currentWaveIndex >= totalWaves && playerLivesRef.current > 0) {
+            context.fillStyle = "rgba(255, 215, 0, 0.95)";
+            context.fillRect(0, 0, worldDimensions.canvasWidth, worldDimensions.canvasHeight);
 
-            ctx.strokeStyle = "#ffd700";
-            ctx.lineWidth = 8;
-            ctx.strokeRect(20, 20, world.canvasWidth - 40, world.canvasHeight - 40);
+            context.strokeStyle = "#ffd700";
+            context.lineWidth = 8;
+            context.strokeRect(20, 20, worldDimensions.canvasWidth - 40, worldDimensions.canvasHeight - 40);
 
-            ctx.fillStyle = "#ffeb3b";
-            ctx.font = "bold 72px monospace";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
-            ctx.shadowBlur = 20;
-            ctx.fillText("VICTOIRE !", world.canvasWidth / 2, world.canvasHeight / 2 - 80);
+            context.fillStyle = "#ffeb3b";
+            context.font = "bold 72px monospace";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.shadowColor = "rgba(255, 215, 0, 0.8)";
+            context.shadowBlur = 20;
+            context.fillText("VICTOIRE !", worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 - 80);
 
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = "#fff176";
-            ctx.font = "bold 32px monospace";
-            ctx.fillText("Toutes les vagues vaincues !", world.canvasWidth / 2, world.canvasHeight / 2 - 20);
+            context.shadowBlur = 0;
+            context.fillStyle = "#fff176";
+            context.font = "bold 32px monospace";
+            context.fillText("Toutes les vagues vaincues !", worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 - 20);
 
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "24px monospace";
-            ctx.fillText(`Wave ${totalWaves} terminée`, world.canvasWidth / 2, world.canvasHeight / 2 + 50);
-            ctx.fillText(`Score final: $${money}`, world.canvasWidth / 2, world.canvasHeight / 2 + 90);
+            context.fillStyle = "#ffffff";
+            context.font = "24px monospace";
+            context.fillText(`Wave ${totalWaves} terminée`, worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 + 50);
+            context.fillText(`Score final: $${playerMoney}`, worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 + 90);
 
-            const btnY = world.canvasHeight / 2 + 150;
+            const buttonY = worldDimensions.canvasHeight / 2 + 150;
 
-            ctx.fillStyle = "#4caf50";
-            ctx.fillRect(world.canvasWidth / 2 - 260, btnY, 240, 60);
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 3;
-            ctx.strokeRect(world.canvasWidth / 2 - 260, btnY, 240, 60);
+            context.fillStyle = "#4caf50";
+            context.fillRect(worldDimensions.canvasWidth / 2 - 260, buttonY, 240, 60);
+            context.strokeStyle = "#ffffff";
+            context.lineWidth = 3;
+            context.strokeRect(worldDimensions.canvasWidth / 2 - 260, buttonY, 240, 60);
 
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 22px monospace";
-            ctx.textBaseline = "middle";
-            ctx.fillText("REJOUER", world.canvasWidth / 2 - 140, btnY + 30);
+            context.fillStyle = "#ffffff";
+            context.font = "bold 22px monospace";
+            context.textBaseline = "middle";
+            context.fillText("REJOUER", worldDimensions.canvasWidth / 2 - 140, buttonY + 30);
 
-            ctx.fillStyle = "#4a90e2";
-            ctx.fillRect(world.canvasWidth / 2 + 20, btnY, 240, 60);
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 3;
-            ctx.strokeRect(world.canvasWidth / 2 + 20, btnY, 240, 60);
+            context.fillStyle = "#4a90e2";
+            context.fillRect(worldDimensions.canvasWidth / 2 + 20, buttonY, 240, 60);
+            context.strokeStyle = "#ffffff";
+            context.lineWidth = 3;
+            context.strokeRect(worldDimensions.canvasWidth / 2 + 20, buttonY, 240, 60);
 
-            ctx.fillStyle = "#ffffff";
-            ctx.fillText("PORTFOLIO", world.canvasWidth / 2 + 140, btnY + 30);
-            ctx.textAlign = "left";
-            ctx.textBaseline = "alphabetic";
+            context.fillStyle = "#ffffff";
+            context.fillText("PORTFOLIO", worldDimensions.canvasWidth / 2 + 140, buttonY + 30);
+            context.textAlign = "left";
+            context.textBaseline = "alphabetic";
             return;
         }
 
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, world.canvasWidth, world.canvasHeight);
+        context.fillStyle = "#000";
+        context.fillRect(0, 0, worldDimensions.canvasWidth, worldDimensions.canvasHeight);
 
-        const tileset = groundTilesetRef.current;
-        const srcTileSize = 32;
-        const srcCol = 0;
-        const srcRow = 7;
-        const srcX = srcCol * srcTileSize;
-        const srcY = srcRow * srcTileSize;
+        const tilesetImage = groundTilesetImageRef.current;
+        const sourceTileSize = 32;
+        const sourceColumn = 0;
+        const sourceRow = 7;
+        const sourceX = sourceColumn * sourceTileSize;
+        const sourceY = sourceRow * sourceTileSize;
 
-        if (tileset && tileset.complete) {
-            for (let gy = 0; gy < rowCount; gy++) {
-                for (let gx = 0; gx < colCount; gx++) {
-                    const dx = world.gridOffsetX + gx * world.tileSize;
-                    const dy = world.gridOffsetY + gy * world.tileSize;
+        if (tilesetImage && tilesetImage.complete) {
+            for (let gridY = 0; gridY < mapRowCount; gridY++) {
+                for (let gridX = 0; gridX < mapColumnCount; gridX++) {
+                    const destinationX = worldDimensions.gridOffsetX + gridX * worldDimensions.tileSize;
+                    const destinationY = worldDimensions.gridOffsetY + gridY * worldDimensions.tileSize;
 
-                    ctx.drawImage(tileset, srcX, srcY, srcTileSize, srcTileSize, dx, dy, world.tileSize, world.tileSize);
+                    context.drawImage(
+                        tilesetImage,
+                        sourceX,
+                        sourceY,
+                        sourceTileSize,
+                        sourceTileSize,
+                        destinationX,
+                        destinationY,
+                        worldDimensions.tileSize,
+                        worldDimensions.tileSize
+                    );
                 }
             }
-        } else {
-            ctx.fillStyle = "#064e3b";
-            ctx.fillRect(world.gridOffsetX, world.gridOffsetY, colCount * world.tileSize, rowCount * world.tileSize);
+        } 
+        else {
+            context.fillStyle = "#064e3b";
+            context.fillRect(
+                worldDimensions.gridOffsetX,
+                worldDimensions.gridOffsetY,
+                mapColumnCount * worldDimensions.tileSize,
+                mapRowCount * worldDimensions.tileSize
+            );
         }
 
-        ctx.strokeStyle = "rgba(0,0,0,0.25)";
-        ctx.lineWidth = 1;
+        context.strokeStyle = "rgba(0,0,0,0.25)";
+        context.lineWidth = 1;
 
-        for (let x = 0; x <= colCount; x++) {
-            ctx.beginPath();
-            ctx.moveTo(world.gridOffsetX + x * world.tileSize, world.gridOffsetY);
-            ctx.lineTo(world.gridOffsetX + x * world.tileSize, world.gridOffsetY + rowCount * world.tileSize);
-            ctx.stroke();
+        for (let x = 0; x <= mapColumnCount; x++) {
+            context.beginPath();
+            context.moveTo(
+                worldDimensions.gridOffsetX + x * worldDimensions.tileSize,
+                worldDimensions.gridOffsetY
+            );
+            context.lineTo(
+                worldDimensions.gridOffsetX + x * worldDimensions.tileSize,
+                worldDimensions.gridOffsetY + mapRowCount * worldDimensions.tileSize
+            );
+            context.stroke();
         }
 
-        for (let y = 0; y <= rowCount; y++) {
-            ctx.beginPath();
-            ctx.moveTo(world.gridOffsetX, world.gridOffsetY + y * world.tileSize);
-            ctx.lineTo(world.gridOffsetX + colCount * world.tileSize, world.gridOffsetY + y * world.tileSize);
-            ctx.stroke();
+        for (let y = 0; y <= mapRowCount; y++) {
+            context.beginPath();
+            context.moveTo(
+                worldDimensions.gridOffsetX,
+                worldDimensions.gridOffsetY + y * worldDimensions.tileSize
+            );
+            context.lineTo(
+                worldDimensions.gridOffsetX + mapColumnCount * worldDimensions.tileSize,
+                worldDimensions.gridOffsetY + y * worldDimensions.tileSize
+            );
+            context.stroke();
         }
 
         for (const tower of towerListRef.current) {
-            drawSpriteFrame(ctx, {
+            drawSpriteFrame(context, {
                 spriteSrc: tower.sprite.src,
                 frameSize: tower.sprite.frameSize,
                 cols: tower.sprite.cols,
@@ -590,21 +855,53 @@ export default function TowerDefenseClient(props: {
                 row: tower.dirRow,
                 x: tower.x,
                 y: tower.y,
-                drawSize: world.tileSize * 1.35
+                drawSize: worldDimensions.tileSize * 1.35
             });
 
+            if (selectedTowerId === tower.id) {
+                context.strokeStyle = "#ffeb3b";
+                context.lineWidth = 4;
+                context.beginPath();
+                context.arc(tower.x, tower.y, worldDimensions.tileSize * 0.6, 0, 2 * Math.PI);
+                context.stroke();
+            }
+
+            if (tower.level > 0) {
+                const levelIndicatorSize = worldDimensions.tileSize * 0.25;
+                context.fillStyle = tower.upgradePath === 1 ? "#ff4444" : "#4444ff";
+                context.beginPath();
+                context.arc(
+                    tower.x + worldDimensions.tileSize * 0.4,
+                    tower.y - worldDimensions.tileSize * 0.4,
+                    levelIndicatorSize,
+                    0,
+                    2 * Math.PI
+                );
+                context.fill();
+
+                context.fillStyle = "#ffffff";
+                context.font = `bold ${levelIndicatorSize * 1.4}px monospace`;
+                context.textAlign = "center";
+                context.textBaseline = "middle";
+                context.fillText(
+                    tower.level.toString(),
+                    tower.x + worldDimensions.tileSize * 0.4,
+                    tower.y - worldDimensions.tileSize * 0.4
+                );
+            }
+
             if (speedMode === "pause") {
-                ctx.strokeStyle = "rgba(59,130,246,0.35)";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(tower.x, tower.y, tower.rangePx, 0, 2 * Math.PI);
-                ctx.stroke();
+                context.strokeStyle = "rgba(59,130,246,0.35)";
+                context.lineWidth = 2;
+                context.beginPath();
+                context.arc(tower.x, tower.y, tower.rangePx, 0, 2 * Math.PI);
+                context.stroke();
             }
         }
 
         for (const enemy of enemyListRef.current) {
             if (enemy.sprite) {
-                drawSpriteFrame(ctx, {
+                drawSpriteFrame(context, {
                     spriteSrc: enemy.sprite.src,
                     frameSize: enemy.sprite.frameSize,
                     cols: enemy.sprite.cols,
@@ -617,56 +914,65 @@ export default function TowerDefenseClient(props: {
                 });
             }
 
-            const ratio = clamp01(enemy.hp / enemy.maxHp);
-            const barWidth = enemy.radius * 2;
-            const barHeight = Math.max(3, enemy.radius * 0.35);
+            const healthRatio = clamp01(enemy.hp / enemy.maxHp);
+            const healthBarWidth = enemy.radius * 2;
+            const healthBarHeight = Math.max(3, enemy.radius * 0.35);
+            const healthBarX = enemy.x - healthBarWidth / 2;
+            const healthBarY = enemy.y - enemy.radius - healthBarHeight - 4;
 
-            const barX = enemy.x - barWidth / 2;
-            const barY = enemy.y - enemy.radius - barHeight - 4;
+            context.fillStyle = "rgba(0,0,0,0.6)";
+            context.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
 
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
-            ctx.fillRect(barX, barY, barWidth, barHeight);
+            if (healthRatio > 0.5) {
+                context.fillStyle = "#22c55e";
+            } 
+            else if (healthRatio > 0.25) {
+                context.fillStyle = "#f59e0b";
+            } 
+            else {
+                context.fillStyle = "#ef4444";
+            }
 
-            if (ratio > 0.5) ctx.fillStyle = "#22c55e";
-            else if (ratio > 0.25) ctx.fillStyle = "#f59e0b";
-            else ctx.fillStyle = "#ef4444";
+            context.fillRect(healthBarX, healthBarY, healthBarWidth * healthRatio, healthBarHeight);
 
-            ctx.fillRect(barX, barY, barWidth * ratio, barHeight);
-
-            ctx.strokeStyle = "rgba(255,255,255,0.25)";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(barX, barY, barWidth, barHeight);
+            context.strokeStyle = "rgba(255,255,255,0.25)";
+            context.lineWidth = 1;
+            context.strokeRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
         }
 
-        if (world.waypoints.length >= 2) {
-            ctx.strokeStyle = "rgba(30, 209, 33, 0.25)";
-            ctx.lineWidth = Math.max(2, world.tileSize * 0.1);
-            ctx.beginPath();
-            ctx.moveTo(world.waypoints[0].x, world.waypoints[0].y);
-            for (let i = 1; i < world.waypoints.length; i++)
-                ctx.lineTo(world.waypoints[i].x, world.waypoints[i].y);
-            ctx.stroke();
+        if (worldDimensions.waypoints.length >= 2) {
+            context.strokeStyle = "rgba(30, 209, 33, 0.25)";
+            context.lineWidth = Math.max(2, worldDimensions.tileSize * 0.1);
+            context.beginPath();
+            context.moveTo(worldDimensions.waypoints[0].x, worldDimensions.waypoints[0].y);
+            
+            for (let i = 1; i < worldDimensions.waypoints.length; i++) {
+                context.lineTo(worldDimensions.waypoints[i].x, worldDimensions.waypoints[i].y);
+            }
+            
+            context.stroke();
         }
 
-        ctx.fillStyle = "rgba(255,255,255,0.85)";
-        ctx.font = "12px monospace";
-        ctx.textAlign = "left";
-        ctx.fillText(`Mode: ${speedMode} (x${speedMultiplier})`, 10, 20);
-        ctx.fillText(`Selected: ${selectedTowerTypeId}`, 10, 36);
-    }, [colCount, rowCount, selectedTowerTypeId, speedMode, speedMultiplier, waveIndexUi, money, waveSet.waves.length]);
+        context.fillStyle = "rgba(255,255,255,0.85)";
+        context.font = "12px monospace";
+        context.textAlign = "left";
+        context.textBaseline = "alphabetic";
+        context.fillText(`Mode: ${speedMode} (x${speedMultiplier})`, 10, 20);
+        context.fillText(`Selected: ${selectedTowerTypeId}`, 10, 36);
+    }, [mapColumnCount, mapRowCount, selectedTowerTypeId, speedMode, speedMultiplier, currentWaveIndexUI, playerMoney, waveSet.waves.length, selectedTowerId]);
 
     useEffect(() => {
-        renderFnRef.current = renderFrame;
+        renderFunctionRef.current = renderFrame;
     }, [renderFrame]);
 
     const onAnimationFrame = useCallback(
-        (timestampMs: number) => {
-            const previous = lastTimestampRef.current || timestampMs;
-            const dt = Math.min(0.05, (timestampMs - previous) / 1000);
+        (timestampMilliseconds: number) => {
+            const previousTimestamp = lastTimestampRef.current || timestampMilliseconds;
+            const deltaTime = Math.min(0.05, (timestampMilliseconds - previousTimestamp) / 1000);
 
-            lastTimestampRef.current = timestampMs;
+            lastTimestampRef.current = timestampMilliseconds;
 
-            updateGame(dt);
+            updateGame(deltaTime);
             renderFrame();
 
             animationFrameIdRef.current = window.requestAnimationFrame(onAnimationFrame);
@@ -675,17 +981,18 @@ export default function TowerDefenseClient(props: {
     );
 
     useEffect(() => {
-        resizeCanvasToContainer();
+        resizeCanvasToMatchContainer();
         requestRender();
 
-        window.addEventListener("resize", resizeCanvasToContainer);
+        window.addEventListener("resize", resizeCanvasToMatchContainer);
+        
         return () => {
-            window.removeEventListener("resize", resizeCanvasToContainer);
+            window.removeEventListener("resize", resizeCanvasToMatchContainer);
         };
-    }, [requestRender, resizeCanvasToContainer]);
+    }, [requestRender, resizeCanvasToMatchContainer]);
 
     useEffect(() => {
-        if (!isRunning) {
+        if (!isGameRunning) {
             if (animationFrameIdRef.current !== null) {
                 window.cancelAnimationFrame(animationFrameIdRef.current);
                 animationFrameIdRef.current = null;
@@ -703,24 +1010,27 @@ export default function TowerDefenseClient(props: {
                 animationFrameIdRef.current = null;
             }
         };
-    }, [isRunning, onAnimationFrame, requestRender]);
+    }, [isGameRunning, onAnimationFrame, requestRender]);
 
-    function cycleSpeedMode() {
-        setSpeedMode((prev) => {
-            if (prev === "pause") return "play";
-            else if (prev === "play") return "fast";
-            else return "pause";
+    function toggleSpeedMode() {
+        setSpeedMode((previousMode) => {
+            if (previousMode === "pause") return "play";
+            if (previousMode === "play") return "fast";
+            return "pause";
         });
     }
 
-    const speedButtonLabel =
-        speedMode === "pause"
-            ? "DÉMARRER (x1)"
-            : speedMode === "play"
-                ? "ACCÉLÉRER (x2)"
-                : "PAUSE";
+    const speedButtonLabel = speedMode === "pause"
+        ? "DÉMARRER (x1)"
+        : speedMode === "play"
+            ? "ACCÉLÉRER (x2)"
+            : "PAUSE";
 
-    const SpeedIcon = speedMode === "pause" ? Play : speedMode === "play" ? FastForward : Pause;
+    const SpeedIcon = speedMode === "pause" 
+        ? Play 
+        : speedMode === "play" 
+            ? FastForward 
+            : Pause;
 
     return (
         <main className="w-screen h-screen bg-gray-900 flex items-stretch overflow-hidden">
@@ -738,18 +1048,18 @@ export default function TowerDefenseClient(props: {
 
                 <div className="grid grid-cols-3 gap-2 mb-3">
                     <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
-                        <div className="font-bold text-yellow-400 text-lg">${money}</div>
+                        <div className="font-bold text-yellow-400 text-lg">${playerMoney}</div>
                         <div className="text-xs text-gray-400">Argent</div>
                     </div>
 
                     <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
-                        <div className="font-bold text-blue-400 text-lg">Wave {waveIndexUi + 1}</div>
+                        <div className="font-bold text-blue-400 text-lg">Wave {currentWaveIndexUI + 1}</div>
                         <div className="text-xs text-gray-400">Vague</div>
                     </div>
 
                     <div className="border-2 border-yellow-600 bg-gray-900 p-2 text-center">
-                        <div className={`font-bold text-lg ${lives <= 5 ? 'text-red-400 animate-pulse' : 'text-red-400'}`}>
-                            {lives}
+                        <div className={`font-bold text-lg ${playerLivesUI <= 5 ? 'text-red-400 animate-pulse' : 'text-red-400'}`}>
+                            {playerLivesUI}
                         </div>
                         <div className="text-xs text-gray-400">Vies</div>
                     </div>
@@ -760,36 +1070,168 @@ export default function TowerDefenseClient(props: {
                 </div>
 
                 <div className="grid grid-cols-1 gap-2">
-                    {towers.types.map((t) => (
+                    {towers.types.map((towerType) => (
                         <button
-                            key={t.id}
-                            onClick={() => setSelectedTowerTypeId(t.id)}
+                            key={towerType.id}
+                            onClick={() => setSelectedTowerTypeId(towerType.id)}
                             className={[
                                 "border-2 p-3 rounded transition-all text-left",
-                                selectedTowerTypeId === t.id
+                                selectedTowerTypeId === towerType.id
                                     ? "border-yellow-300 bg-gray-800"
                                     : "border-yellow-600 bg-gray-900 hover:bg-gray-800"
                             ].join(" ")}
                         >
-                            <div className="font-mono text-sm font-bold">{t.name}</div>
-                            <div className="text-yellow-400 font-bold">${t.cost}</div>
+                            <div className="font-mono text-sm font-bold">{towerType.name}</div>
+                            <div className="text-yellow-400 font-bold">${towerType.cost}</div>
                             <div className="text-xs text-gray-400">
-                                Range: {t.range} | DPS: {(t.damage * t.fireRate).toFixed(1)}
+                                Range: {towerType.range} | DPS: {(towerType.damage * towerType.fireRate).toFixed(1)}
                             </div>
                         </button>
                     ))}
                 </div>
 
+                {selectedTowerId !== null && (() => {
+                    const selectedTower = towerListRef.current.find((tower) => tower.id === selectedTowerId);
+                    if (!selectedTower) return null;
+
+                    const upgradeCost = calculateUpgradeCost(selectedTower);
+                    const sellValue = calculateSellValue(selectedTower);
+                    const baseTowerType = towerTypesLookup.get(selectedTower.typeId);
+
+                    return (
+                        <div className="border-2 border-yellow-400 bg-gray-800 p-3 rounded">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="font-mono text-sm font-bold text-yellow-400">
+                                    TOUR SÉLECTIONNÉE
+                                </h3>
+                                <button
+                                    onClick={() => setSelectedTowerId(null)}
+                                    className="text-gray-400 hover:text-white"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className="mb-3">
+                                <div className="font-bold text-white">{baseTowerType?.name}</div>
+                                <div className="text-xs text-gray-400">
+                                    {selectedTower.upgradePath > 0 && `Path ${selectedTower.upgradePath}`}
+                                </div>
+                                <div className="text-xs text-blue-400 mt-1">
+                                    DMG: {selectedTower.damage} | Range: {(selectedTower.rangePx / calculateWorldDimensions()!.tileSize).toFixed(1)} | Fire: {selectedTower.fireRate.toFixed(1)}/s
+                                </div>
+                            </div>
+
+                            <div className="mb-3 flex gap-1">
+                                {[0, 1, 2, 3, 4].map((levelIndex) => (
+                                    <div
+                                        key={levelIndex}
+                                        className={[
+                                            "flex-1 h-3 rounded transition-all",
+                                            levelIndex < selectedTower.level
+                                                ? selectedTower.upgradePath === 1
+                                                    ? "bg-red-500"
+                                                    : selectedTower.upgradePath === 2
+                                                    ? "bg-blue-500"
+                                                    : "bg-gray-500"
+                                                : "bg-gray-700 border border-gray-600"
+                                        ].join(" ")}
+                                    />
+                                ))}
+                            </div>
+
+                            {selectedTower.level === 0 && (
+                                <div className="space-y-2 mb-2">
+                                    <div className="text-xs text-gray-400 mb-1">Choisir un chemin d'upgrade:</div>
+                                    
+                                    <button
+                                        onClick={() => upgradeTowerById(selectedTower.id, 1)}
+                                        disabled={playerMoney < upgradeCost}
+                                        className={[
+                                            "w-full p-2 border-2 rounded text-left transition-all",
+                                            playerMoney >= upgradeCost
+                                                ? "border-red-600 bg-gray-900 hover:bg-gray-800"
+                                                : "border-gray-600 bg-gray-900 opacity-50 cursor-not-allowed"
+                                        ].join(" ")}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1">
+                                                <div className="font-bold text-xs text-red-400">PATH 1: Dégâts</div>
+                                                <div className="text-xs text-gray-400">+35% DMG, +25% Fire Rate</div>
+                                            </div>
+                                            <div className="text-yellow-400 font-bold text-sm">${upgradeCost}</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => upgradeTowerById(selectedTower.id, 2)}
+                                        disabled={playerMoney < upgradeCost}
+                                        className={[
+                                            "w-full p-2 border-2 rounded text-left transition-all",
+                                            playerMoney >= upgradeCost
+                                                ? "border-blue-600 bg-gray-900 hover:bg-gray-800"
+                                                : "border-gray-600 bg-gray-900 opacity-50 cursor-not-allowed"
+                                        ].join(" ")}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1">
+                                                <div className="font-bold text-xs text-blue-400">PATH 2: Portée</div>
+                                                <div className="text-xs text-gray-400">+30% Range, +20% DPS</div>
+                                            </div>
+                                            <div className="text-yellow-400 font-bold text-sm">${upgradeCost}</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+
+                            {selectedTower.level > 0 && selectedTower.level < 4 && (
+                                <button
+                                    onClick={() => upgradeTowerById(selectedTower.id, selectedTower.upgradePath as 1 | 2)}
+                                    disabled={playerMoney < upgradeCost}
+                                    className={[
+                                        "w-full p-2 border-2 rounded mb-2 transition-all flex items-center gap-2",
+                                        playerMoney >= upgradeCost
+                                            ? selectedTower.upgradePath === 1
+                                                ? "border-red-600 bg-gray-900 hover:bg-gray-800"
+                                                : "border-blue-600 bg-gray-900 hover:bg-gray-800"
+                                            : "border-gray-600 bg-gray-900 opacity-50 cursor-not-allowed"
+                                    ].join(" ")}
+                                >
+                                    <div className="flex-1 text-left">
+                                        <div className="font-bold text-xs text-white">UPGRADE</div>
+                                        <div className="text-xs text-gray-400">Path {selectedTower.upgradePath}</div>
+                                    </div>
+                                    <div className="text-yellow-400 font-bold">${upgradeCost}</div>
+                                </button>
+                            )}
+
+                            {selectedTower.level >= 4 && (
+                                <div className="p-2 bg-gray-900 border-2 border-green-600 rounded mb-2 text-center">
+                                    <div className="text-xs font-bold text-green-400">NIVEAU MAX</div>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={() => sellTowerById(selectedTower.id)}
+                                className="w-full p-2 border-2 border-gray-600 bg-gray-900 hover:bg-gray-800 rounded transition-all flex items-center justify-center"
+                                title={`Vendre pour $${sellValue}`}
+                            >
+                                <Trash2 className="w-5 h-5 text-gray-400 hover:text-red-400" />
+                            </button>
+                        </div>
+                    );
+                })()}
+
                 <div className="border-t-2 border-yellow-600 pt-3 mt-auto space-y-2">
                     <button
-                        onClick={cycleSpeedMode}
+                        onClick={toggleSpeedMode}
                         className={[
                             "w-full p-4 border-2 font-mono font-bold flex items-center justify-center gap-2 rounded transition-all",
                             speedMode === "fast"
-                                ? "bg-red-900 border-red-600 hover:bg-red-800 text-red-100"
+                                ? "bg-gray-900 border-red-600 hover:bg-gray-800 text-red-100"
                                 : speedMode === "play"
-                                    ? "bg-yellow-900 border-yellow-600 hover:bg-yellow-800 text-yellow-100"
-                                    : "bg-green-900 border-green-600 hover:bg-green-800 text-green-100"
+                                    ? "bg-gray-900 border-yellow-600 hover:bg-gray-800 text-yellow-100"
+                                    : "bg-gray-900 border-green-600 hover:bg-gray-800 text-green-100"
                         ].join(" ")}
                     >
                         <SpeedIcon className="w-5 h-5" />

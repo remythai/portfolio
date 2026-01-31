@@ -1,77 +1,139 @@
 {
     "types": [
-      {
-        "id": "normal",
-        "hp": 25,
-        "speed": 70,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_normal.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      },
-      {
-        "id": "fast",
-        "hp": 18,
-        "speed": 95,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_fast.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      },
-      {
-        "id": "armored",
-        "hp": 60,
-        "speed": 55,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_armored.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      },
-      {
-        "id": "cash",
-        "hp": 22,
-        "speed": 75,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_cash.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      },
-      {
-        "id": "healing",
-        "hp": 35,
-        "speed": 65,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_healing.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      },
-      {
-        "id": "invisible",
-        "hp": 20,
-        "speed": 80,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_invisible.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      },
-      {
-        "id": "damageflash",
-        "hp": 30,
-        "speed": 70,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_damageflash.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      },
-      {
-        "id": "exploding",
-        "hp": 28,
-        "speed": 68,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_exploding.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      },
-      {
-        "id": "teleporting",
-        "hp": 26,
-        "speed": 85,
-        "color": "#ffffff",
-        "radiusScale": 0.38,
-        "sprite": { "src": "/textures/enemy_basic_teleporting.png", "frameSize": 32, "cols": 6, "rows": 4, "fps": 8 }
-      }
+        {
+            "id": "normal",
+            "hp": 25,
+            "speed": 70,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 1,
+            "sprite": {
+                "src": "/textures/enemy_basic_normal.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        },
+        {
+            "id": "fast",
+            "hp": 18,
+            "speed": 95,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 1,
+            "sprite": {
+                "src": "/textures/enemy_basic_fast.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        },
+        {
+            "id": "armored",
+            "hp": 60,
+            "speed": 55,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 2,
+            "sprite": {
+                "src": "/textures/enemy_basic_armored.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        },
+        {
+            "id": "cash",
+            "hp": 22,
+            "speed": 75,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 3,
+            "sprite": {
+                "src": "/textures/enemy_basic_cash.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        },
+        {
+            "id": "healing",
+            "hp": 35,
+            "speed": 65,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 2,
+            "sprite": {
+                "src": "/textures/enemy_basic_healing.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        },
+        {
+            "id": "invisible",
+            "hp": 20,
+            "speed": 80,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 2,
+            "sprite": {
+                "src": "/textures/enemy_basic_invisible.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        },
+        {
+            "id": "damageflash",
+            "hp": 30,
+            "speed": 70,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 1,
+            "sprite": {
+                "src": "/textures/enemy_basic_damageflash.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        },
+        {
+            "id": "exploding",
+            "hp": 28,
+            "speed": 68,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 2,
+            "sprite": {
+                "src": "/textures/enemy_basic_exploding.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        },
+        {
+            "id": "teleporting",
+            "hp": 26,
+            "speed": 85,
+            "color": "#ffffff",
+            "radiusScale": 0.38,
+            "reward": 2,
+            "sprite": {
+                "src": "/textures/enemy_basic_teleporting.png",
+                "frameSize": 32,
+                "cols": 6,
+                "rows": 4,
+                "fps": 8
+            }
+        }
     ]
-  }
-  
+}

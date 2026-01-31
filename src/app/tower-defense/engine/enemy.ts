@@ -1,5 +1,5 @@
 import type { Vec2 } from "./math";
-import { moveTowards } from "./math";
+import { moveTowards, distance } from "./math";
 
 export type SpriteDef = {
     src: string;
@@ -16,27 +16,29 @@ export type EnemyType = {
     color: string;
     radiusScale: number;
     sprite?: SpriteDef;
+    reward: number;
 };
 
 export type EnemyInstance = {
     id: number;
     typeId: string;
-
     x: number;
     y: number;
-
     speed: number;
     hp: number;
     maxHp: number;
-
     waypointIndex: number;
-
     radius: number;
     color: string;
-
     animTime: number;
-    dirRow: 0 | 1 | 2 | 3; // 0 up, 1 right, 2 down, 3 left
+    dirRow: 0 | 1 | 2 | 3;
     sprite?: SpriteDef;
+};
+
+export type EnemyUpdateResult = {
+    enemies: EnemyInstance[];
+    escapedCount: number;
+    killedIds: number[];
 };
 
 function directionRowFromVector(dx: number, dy: number): 0 | 1 | 2 | 3 {
@@ -44,15 +46,11 @@ function directionRowFromVector(dx: number, dy: number): 0 | 1 | 2 | 3 {
     const absY = Math.abs(dy);
 
     if (absX >= absY) {
-        if (dx >= 0)
-            return 1;
-        else
-            return 3;
+        if (dx >= 0) return 1;
+        else return 3;
     }
-    else if (dy >= 0)
-        return 2;
-    else
-        return 0;
+    else if (dy >= 0) return 2;
+    else return 0;
 }
 
 export function spawnEnemy(params: {
@@ -86,13 +84,18 @@ export function spawnEnemy(params: {
     return { enemies: [...enemies, enemy], nextId: nextId + 1 };
 }
 
-export function updateEnemies(params: { enemies: EnemyInstance[]; dt: number; waypoints: Vec2[] }): EnemyInstance[] {
+export function updateEnemies(params: {
+    enemies: EnemyInstance[];
+    dt: number;
+    waypoints: Vec2[]
+}): EnemyUpdateResult {
     const { enemies, dt, waypoints } = params;
 
     if (waypoints.length < 2)
-        return enemies;
+        return { enemies: [], escapedCount: 0, killedIds: [] };
 
     const nextEnemies: EnemyInstance[] = [];
+    let escapedCount = 0;
 
     for (const enemy of enemies) {
         let waypointIndex = enemy.waypointIndex;
@@ -109,11 +112,13 @@ export function updateEnemies(params: { enemies: EnemyInstance[]; dt: number; wa
 
         let nextWaypointIndex = waypointIndex;
 
-        if (nextPos.x === target.x && nextPos.y === target.y) {
+        if (distance(nextPos, target) <= 2) {
             nextWaypointIndex += 1;
 
-            if (nextWaypointIndex >= waypoints.length)
+            if (nextWaypointIndex >= waypoints.length) {
+                escapedCount += 1;
                 continue;
+            }
         }
 
         nextEnemies.push({
@@ -126,7 +131,7 @@ export function updateEnemies(params: { enemies: EnemyInstance[]; dt: number; wa
         });
     }
 
-    return nextEnemies;
+    return { enemies: nextEnemies, escapedCount, killedIds: [] };
 }
 
 export function applyEnemyDamage(enemies: EnemyInstance[], events: Array<{ enemyId: number; dmg: number }>) {

@@ -8,7 +8,8 @@ import type { EnemiesJson, MapJson, TowersJson, WaveSetJson } from "./page";
 import { clamp01, type Vec2 } from "./engine/math";
 import type { EnemyInstance, EnemyType, EnemyUpdateResult } from "./engine/enemy";
 import { applyEnemyDamage, spawnEnemy, updateEnemies } from "./engine/enemy";
-import { TowerInstance, TowerType, placeTower, updateTowers } from "./engine/tower";
+import type { TowerInstance, TowerType } from "./engine/tower";
+import { placeTower, updateTowers } from "./engine/tower";
 
 type SpeedMode = "pause" | "play" | "fast";
 
@@ -56,6 +57,8 @@ export default function TowerDefenseClient(props: {
     const waveIndexRef = useRef(0);
     const spawnedCountInWaveRef = useRef(0);
     const spawnTimerRef = useRef(0);
+
+    const livesRef = useRef(20);
 
     const [speedMode, setSpeedMode] = useState<SpeedMode>("pause");
     const [selectedTowerTypeId, setSelectedTowerTypeId] = useState("ninja_basic");
@@ -288,22 +291,45 @@ export default function TowerDefenseClient(props: {
         const canvas = canvasRef.current;
         if (canvas === null) return;
 
-        const onClick = (evt: MouseEvent) => {
+        const handleClick = (evt: MouseEvent) => {
             const world = computeWorld();
             if (world === null) return;
 
             const pos = getCanvasMousePosition(evt);
             if (pos === null) return;
 
+            const isGameOver = livesRef.current === 0;
+            const currentWaveIndex = waveIndexRef.current;
+            const totalWaves = waveSet.waves.length;
+            const isVictory = currentWaveIndex >= totalWaves;
+
+            if (isGameOver || isVictory) {
+                const btnY = world.canvasHeight / 2 + 150;
+
+                const replayBtnX = world.canvasWidth / 2 - 260;
+                if (pos.x >= replayBtnX && pos.x <= replayBtnX + 240 &&
+                    pos.y >= btnY && pos.y <= btnY + 60) {
+                    window.location.reload();
+                    return;
+                }
+
+                const portfolioBtnX = world.canvasWidth / 2 + 20;
+                if (pos.x >= portfolioBtnX && pos.x <= portfolioBtnX + 240 &&
+                    pos.y >= btnY && pos.y <= btnY + 60) {
+                    window.location.href = "/";
+                    return;
+                }
+            }
+
             const cell = getGridCellFromCanvasPosition(world, pos);
             placeSelectedTowerAt(cell.gridX, cell.gridY);
         };
 
-        canvas.addEventListener("click", onClick);
+        canvas.addEventListener("click", handleClick);
         return () => {
-            canvas.removeEventListener("click", onClick);
+            canvas.removeEventListener("click", handleClick);
         };
-    }, [computeWorld, placeSelectedTowerAt]);
+    }, [computeWorld, placeSelectedTowerAt, waveSet.waves.length]);
 
     const updateGame = useCallback(
         (dt: number) => {
@@ -347,24 +373,26 @@ export default function TowerDefenseClient(props: {
                     moneyEarned += type?.reward ?? 1;
                 }
             }
-            if (moneyEarned > 0) {
+            if (moneyEarned > 0)
                 setMoney(prev => prev + moneyEarned);
-            }
 
             if (enemyUpdate.escapedCount > 0) {
-                setLives(prev => Math.max(0, prev - enemyUpdate.escapedCount));
+                livesRef.current = Math.max(0, livesRef.current - enemyUpdate.escapedCount);
+                setLives(livesRef.current);
             }
 
             const doneSpawning = spawnedCountInWaveRef.current >= wave.count;
             const noEnemiesLeft = enemiesAfterDamage.length === 0;
 
             if (doneSpawning && noEnemiesLeft) {
-                if (waveIndexRef.current < waveSet.waves.length - 1) {
+                if (waveIndexRef.current < waveSet.waves.length) {
                     waveIndexRef.current += 1;
                     spawnedCountInWaveRef.current = 0;
                     spawnTimerRef.current = 0;
                     setWaveIndexUi(waveIndexRef.current);
-                    setMoney(prev => prev + 20);
+                    
+                    if (waveIndexRef.current < waveSet.waves.length)
+                        setMoney(prev => prev + 20);
                 }
             }
 
@@ -399,21 +427,120 @@ export default function TowerDefenseClient(props: {
             return;
         }
 
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, world.canvasWidth, world.canvasHeight);
-
-        if (lives === 0) {
-            ctx.fillStyle = "rgba(0,0,0,0.8)";
+        if (livesRef.current === 0) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, world.canvasHeight);
+            gradient.addColorStop(0, "rgba(139, 0, 0, 0.95)");
+            gradient.addColorStop(1, "rgba(78, 0, 0, 0.95)");
+            ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, world.canvasWidth, world.canvasHeight);
-            ctx.fillStyle = "#ff4444";
-            ctx.font = "48px monospace";
+
+            ctx.strokeStyle = "#ff3333";
+            ctx.lineWidth = 8;
+            ctx.strokeRect(20, 20, world.canvasWidth - 40, world.canvasHeight - 40);
+
+            ctx.fillStyle = "#ff6666";
+            ctx.font = "bold 72px monospace";
             ctx.textAlign = "center";
-            ctx.fillText("GAME OVER", world.canvasWidth / 2, world.canvasHeight / 2);
+            ctx.textBaseline = "middle";
+            ctx.shadowColor = "rgba(255, 0, 0, 0.8)";
+            ctx.shadowBlur = 20;
+            ctx.fillText("GAME OVER", world.canvasWidth / 2, world.canvasHeight / 2 - 80);
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "#ff9999";
+            ctx.font = "bold 32px monospace";
+            ctx.fillText("Toutes vos tours ont été dépassées", world.canvasWidth / 2, world.canvasHeight / 2 - 20);
+
+            ctx.fillStyle = "#ffffff";
             ctx.font = "24px monospace";
-            ctx.fillText("Refresh pour recommencer", world.canvasWidth / 2, world.canvasHeight / 2 + 60);
+            ctx.fillText(`Wave ${waveIndexUi + 1} terminée`, world.canvasWidth / 2, world.canvasHeight / 2 + 50);
+            ctx.fillText(`Argent final: $${money}`, world.canvasWidth / 2, world.canvasHeight / 2 + 90);
+
+            const btnY = world.canvasHeight / 2 + 150;
+
+            ctx.fillStyle = "#ff4444";
+            ctx.fillRect(world.canvasWidth / 2 - 260, btnY, 240, 60);
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(world.canvasWidth / 2 - 260, btnY, 240, 60);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 22px monospace";
+            ctx.textBaseline = "middle";
+            ctx.fillText("REJOUER", world.canvasWidth / 2 - 140, btnY + 30);
+
+            ctx.fillStyle = "#4a90e2";
+            ctx.fillRect(world.canvasWidth / 2 + 20, btnY, 240, 60);
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(world.canvasWidth / 2 + 20, btnY, 240, 60);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText("PORTFOLIO", world.canvasWidth / 2 + 140, btnY + 30);
             ctx.textAlign = "left";
+            ctx.textBaseline = "alphabetic";
             return;
         }
+
+        const currentWaveIndex = waveIndexRef.current;
+        const totalWaves = waveSet.waves.length;
+        if (currentWaveIndex >= totalWaves && livesRef.current > 0) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, world.canvasHeight);
+            gradient.addColorStop(0, "rgba(255, 215, 0, 0.95)");
+            gradient.addColorStop(1, "rgba(184, 134, 11, 0.95)");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, world.canvasWidth, world.canvasHeight);
+
+            ctx.strokeStyle = "#ffd700";
+            ctx.lineWidth = 8;
+            ctx.strokeRect(20, 20, world.canvasWidth - 40, world.canvasHeight - 40);
+
+            ctx.fillStyle = "#ffeb3b";
+            ctx.font = "bold 72px monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+            ctx.shadowBlur = 20;
+            ctx.fillText("VICTOIRE !", world.canvasWidth / 2, world.canvasHeight / 2 - 80);
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "#fff176";
+            ctx.font = "bold 32px monospace";
+            ctx.fillText("Toutes les vagues vaincues !", world.canvasWidth / 2, world.canvasHeight / 2 - 20);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "24px monospace";
+            ctx.fillText(`Wave ${totalWaves} terminée`, world.canvasWidth / 2, world.canvasHeight / 2 + 50);
+            ctx.fillText(`Score final: $${money}`, world.canvasWidth / 2, world.canvasHeight / 2 + 90);
+
+            const btnY = world.canvasHeight / 2 + 150;
+
+            ctx.fillStyle = "#4caf50";
+            ctx.fillRect(world.canvasWidth / 2 - 260, btnY, 240, 60);
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(world.canvasWidth / 2 - 260, btnY, 240, 60);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 22px monospace";
+            ctx.textBaseline = "middle";
+            ctx.fillText("REJOUER", world.canvasWidth / 2 - 140, btnY + 30);
+
+            ctx.fillStyle = "#4a90e2";
+            ctx.fillRect(world.canvasWidth / 2 + 20, btnY, 240, 60);
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(world.canvasWidth / 2 + 20, btnY, 240, 60);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText("PORTFOLIO", world.canvasWidth / 2 + 140, btnY + 30);
+            ctx.textAlign = "left";
+            ctx.textBaseline = "alphabetic";
+            return;
+        }
+
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, world.canvasWidth, world.canvasHeight);
 
         const tileset = groundTilesetRef.current;
         const srcTileSize = 32;
@@ -526,8 +653,7 @@ export default function TowerDefenseClient(props: {
         ctx.textAlign = "left";
         ctx.fillText(`Mode: ${speedMode} (x${speedMultiplier})`, 10, 20);
         ctx.fillText(`Selected: ${selectedTowerTypeId}`, 10, 36);
-        ctx.textAlign = "left";
-    }, [colCount, computeWorld, rowCount, selectedTowerTypeId, speedMode, speedMultiplier, lives]);
+    }, [colCount, rowCount, selectedTowerTypeId, speedMode, speedMultiplier, waveIndexUi, money, waveSet.waves.length]);
 
     useEffect(() => {
         renderFnRef.current = renderFrame;

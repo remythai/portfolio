@@ -1,6 +1,6 @@
 {
     "id": "standard",
-    "name": "All enemy types demo",
+    "name": "All enemy",
     "waves": [
         {
             "enemyId": "normal",

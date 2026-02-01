@@ -4,14 +4,14 @@
     "waves": [
         {
             "enemies": [
-                { "enemyId": "normal", "count": 8 }
+                { "enemyId": "normal", "count": 10 }
             ],
-            "intervalSec": 0.7
+            "intervalSec": 0.65
         },
         {
             "enemies": [
-                { "enemyId": "normal", "count": 10 },
-                { "enemyId": "fast", "count": 5 }
+                { "enemyId": "normal", "count": 8 },
+                { "enemyId": "fast", "count": 4 }
             ],
             "intervalSec": 0.6
         },
@@ -23,144 +23,179 @@
         },
         {
             "enemies": [
-                { "enemyId": "normal", "count": 12 },
-                { "enemyId": "armored", "count": 3 }
+                { "enemyId": "normal", "count": 10 },
+                { "enemyId": "armored", "count": 2 }
             ],
-            "intervalSec": 0.55
+            "intervalSec": 0.6
         },
         {
             "enemies": [
-                { "enemyId": "armored", "count": 8 }
+                { "enemyId": "armored", "count": 5 }
             ],
             "intervalSec": 0.75
         },
         {
             "enemies": [
-                { "enemyId": "fast", "count": 10 },
-                { "enemyId": "normal", "count": 8 }
+                { "enemyId": "fast", "count": 12 },
+                { "enemyId": "normal", "count": 6 }
             ],
-            "intervalSec": 0.45
+            "intervalSec": 0.48
         },
         {
             "enemies": [
-                { "enemyId": "cash", "count": 15 }
+                { "enemyId": "cash", "count": 14 }
             ],
-            "intervalSec": 0.6
+            "intervalSec": 0.55
         },
         {
             "enemies": [
-                { "enemyId": "normal", "count": 14 },
-                { "enemyId": "fast", "count": 6 },
-                { "enemyId": "armored", "count": 3 }
+                { "enemyId": "normal", "count": 12 },
+                { "enemyId": "fast", "count": 8 },
+                { "enemyId": "armored", "count": 2 }
+            ],
+            "intervalSec": 0.52
+        },
+        {
+            "enemies": [
+                { "enemyId": "armored", "count": 8 },
+                { "enemyId": "healing", "count": 3 }
+            ],
+            "intervalSec": 0.68
+        },
+        {
+            "enemies": [
+                { "enemyId": "fast", "count": 16 },
+                { "enemyId": "healing", "count": 2 }
+            ],
+            "intervalSec": 0.42
+        },
+        {
+            "enemies": [
+                { "enemyId": "healing", "count": 8 },
+                { "enemyId": "armored", "count": 4 }
+            ],
+            "intervalSec": 0.62
+        },
+        {
+            "enemies": [
+                { "enemyId": "cash", "count": 10 },
+                { "enemyId": "normal", "count": 8 },
+                { "enemyId": "fast", "count": 6 }
             ],
             "intervalSec": 0.5
         },
         {
             "enemies": [
-                { "enemyId": "armored", "count": 10 },
-                { "enemyId": "healing", "count": 4 }
+                { "enemyId": "invisible", "count": 10 }
             ],
-            "intervalSec": 0.7
+            "intervalSec": 0.55
         },
         {
             "enemies": [
-                { "enemyId": "fast", "count": 18 }
+                { "enemyId": "normal", "count": 14 },
+                { "enemyId": "invisible", "count": 6 }
+            ],
+            "intervalSec": 0.48
+        },
+        {
+            "enemies": [
+                { "enemyId": "armored", "count": 10 },
+                { "enemyId": "healing", "count": 5 },
+                { "enemyId": "invisible", "count": 3 }
+            ],
+            "intervalSec": 0.58
+        },
+        {
+            "enemies": [
+                { "enemyId": "fast", "count": 18 },
+                { "enemyId": "invisible", "count": 6 }
             ],
             "intervalSec": 0.4
         },
         {
             "enemies": [
-                { "enemyId": "healing", "count": 12 }
+                { "enemyId": "damageflash", "count": 10 }
             ],
-            "intervalSec": 0.65
+            "intervalSec": 0.58
         },
         {
             "enemies": [
-                { "enemyId": "cash", "count": 12 },
-                { "enemyId": "normal", "count": 8 }
+                { "enemyId": "healing", "count": 8 },
+                { "enemyId": "armored", "count": 6 },
+                { "enemyId": "damageflash", "count": 4 }
             ],
             "intervalSec": 0.55
         },
         {
             "enemies": [
-                { "enemyId": "normal", "count": 15 },
-                { "enemyId": "fast", "count": 10 }
+                { "enemyId": "invisible", "count": 12 },
+                { "enemyId": "damageflash", "count": 6 }
             ],
-            "intervalSec": 0.45
+            "intervalSec": 0.48
         },
         {
             "enemies": [
-                { "enemyId": "armored", "count": 12 },
-                { "enemyId": "healing", "count": 5 }
+                { "enemyId": "exploding", "count": 8 }
             ],
             "intervalSec": 0.65
         },
         {
             "enemies": [
-                { "enemyId": "invisible", "count": 14 }
+                { "enemyId": "fast", "count": 16 },
+                { "enemyId": "exploding", "count": 5 },
+                { "enemyId": "normal", "count": 8 }
             ],
-            "intervalSec": 0.5
+            "intervalSec": 0.42
         },
         {
             "enemies": [
-                { "enemyId": "fast", "count": 16 },
-                { "enemyId": "invisible", "count": 6 }
+                { "enemyId": "cash", "count": 18 }
+            ],
+            "intervalSec": 0.48
+        },
+        {
+            "enemies": [
+                { "enemyId": "armored", "count": 12 },
+                { "enemyId": "healing", "count": 6 },
+                { "enemyId": "exploding", "count": 4 }
+            ],
+            "intervalSec": 0.52
+        },
+        {
+            "enemies": [
+                { "enemyId": "teleporting", "count": 10 }
+            ],
+            "intervalSec": 0.55
+        },
+        {
+            "enemies": [
+                { "enemyId": "teleporting", "count": 8 },
+                { "enemyId": "armored", "count": 6 },
+                { "enemyId": "healing", "count": 4 }
+            ],
+            "intervalSec": 0.52
+        },
+        {
+            "enemies": [
+                { "enemyId": "invisible", "count": 14 },
+                { "enemyId": "teleporting", "count": 8 }
+            ],
+            "intervalSec": 0.45
+        },
+        {
+            "enemies": [
+                { "enemyId": "fast", "count": 20 },
+                { "enemyId": "invisible", "count": 8 },
+                { "enemyId": "damageflash", "count": 4 }
             ],
             "intervalSec": 0.38
         },
         {
             "enemies": [
-                { "enemyId": "healing", "count": 10 },
-                { "enemyId": "armored", "count": 8 }
-            ],
-            "intervalSec": 0.6
-        },
-        {
-            "enemies": [
-                { "enemyId": "damageflash", "count": 12 }
-            ],
-            "intervalSec": 0.6
-        },
-        {
-            "enemies": [
-                { "enemyId": "armored", "count": 10 },
-                { "enemyId": "fast", "count": 8 },
-                { "enemyId": "healing", "count": 4 }
-            ],
-            "intervalSec": 0.6
-        },
-        {
-            "enemies": [
-                { "enemyId": "invisible", "count": 16 },
-                { "enemyId": "damageflash", "count": 6 }
-            ],
-            "intervalSec": 0.45
-        },
-        {
-            "enemies": [
-                { "enemyId": "exploding", "count": 10 }
-            ],
-            "intervalSec": 0.7
-        },
-        {
-            "enemies": [
-                { "enemyId": "fast", "count": 20 },
-                { "enemyId": "exploding", "count": 5 }
-            ],
-            "intervalSec": 0.35
-        },
-        {
-            "enemies": [
-                { "enemyId": "cash", "count": 20 }
+                { "enemyId": "exploding", "count": 10 },
+                { "enemyId": "teleporting", "count": 8 }
             ],
             "intervalSec": 0.5
-        },
-        {
-            "enemies": [
-                { "enemyId": "teleporting", "count": 12 },
-                { "enemyId": "armored", "count": 6 }
-            ],
-            "intervalSec": 0.55
         },
         {
             "enemies": [
@@ -168,118 +203,96 @@
                 { "enemyId": "healing", "count": 8 },
                 { "enemyId": "invisible", "count": 6 }
             ],
-            "intervalSec": 0.55
-        },
-        {
-            "enemies": [
-                { "enemyId": "healing", "count": 12 },
-                { "enemyId": "teleporting", "count": 8 }
-            ],
             "intervalSec": 0.5
         },
         {
             "enemies": [
+                { "enemyId": "damageflash", "count": 12 },
+                { "enemyId": "exploding", "count": 8 },
+                { "enemyId": "teleporting", "count": 6 }
+            ],
+            "intervalSec": 0.48
+        },
+        {
+            "enemies": [
+                { "enemyId": "fast", "count": 22 },
+                { "enemyId": "teleporting", "count": 8 }
+            ],
+            "intervalSec": 0.35
+        },
+        {
+            "enemies": [
+                { "enemyId": "armored", "count": 16 },
+                { "enemyId": "healing", "count": 10 },
+                { "enemyId": "invisible", "count": 6 }
+            ],
+            "intervalSec": 0.48
+        },
+        {
+            "enemies": [
+                { "enemyId": "invisible", "count": 16 },
+                { "enemyId": "exploding", "count": 8 },
+                { "enemyId": "damageflash", "count": 6 }
+            ],
+            "intervalSec": 0.42
+        },
+        {
+            "enemies": [
+                { "enemyId": "teleporting", "count": 14 },
+                { "enemyId": "armored", "count": 10 }
+            ],
+            "intervalSec": 0.48
+        },
+        {
+            "enemies": [
+                { "enemyId": "fast", "count": 24 },
+                { "enemyId": "exploding", "count": 8 },
+                { "enemyId": "invisible", "count": 6 }
+            ],
+            "intervalSec": 0.35
+        },
+        {
+            "enemies": [
+                { "enemyId": "healing", "count": 12 },
+                { "enemyId": "armored", "count": 12 },
+                { "enemyId": "teleporting", "count": 8 },
+                { "enemyId": "damageflash", "count": 6 }
+            ],
+            "intervalSec": 0.45
+        },
+        {
+            "enemies": [
                 { "enemyId": "invisible", "count": 18 },
-                { "enemyId": "fast", "count": 10 }
+                { "enemyId": "teleporting", "count": 12 },
+                { "enemyId": "exploding", "count": 8 }
             ],
             "intervalSec": 0.4
         },
         {
             "enemies": [
-                { "enemyId": "damageflash", "count": 14 },
-                { "enemyId": "exploding", "count": 6 }
-            ],
-            "intervalSec": 0.5
-        },
-        {
-            "enemies": [
-                { "enemyId": "exploding", "count": 10 },
-                { "enemyId": "teleporting", "count": 8 },
-                { "enemyId": "armored", "count": 6 }
-            ],
-            "intervalSec": 0.6
-        },
-        {
-            "enemies": [
-                { "enemyId": "teleporting", "count": 16 },
-                { "enemyId": "healing", "count": 8 }
-            ],
-            "intervalSec": 0.5
-        },
-        {
-            "enemies": [
                 { "enemyId": "armored", "count": 18 },
-                { "enemyId": "invisible", "count": 10 }
+                { "enemyId": "healing", "count": 12 },
+                { "enemyId": "damageflash", "count": 8 }
             ],
-            "intervalSec": 0.5
+            "intervalSec": 0.45
         },
         {
             "enemies": [
-                { "enemyId": "fast", "count": 25 },
-                { "enemyId": "damageflash", "count": 8 }
+                { "enemyId": "fast", "count": 26 },
+                { "enemyId": "teleporting", "count": 10 },
+                { "enemyId": "exploding", "count": 8 }
             ],
             "intervalSec": 0.32
         },
         {
             "enemies": [
+                { "enemyId": "armored", "count": 20 },
                 { "enemyId": "healing", "count": 14 },
-                { "enemyId": "armored", "count": 12 },
-                { "enemyId": "teleporting", "count": 6 }
-            ],
-            "intervalSec": 0.45
-        },
-        {
-            "enemies": [
-                { "enemyId": "invisible", "count": 20 },
-                { "enemyId": "exploding", "count": 8 }
+                { "enemyId": "invisible", "count": 10 },
+                { "enemyId": "teleporting", "count": 10 },
+                { "enemyId": "damageflash", "count": 6 }
             ],
             "intervalSec": 0.38
-        },
-        {
-            "enemies": [
-                { "enemyId": "damageflash", "count": 16 },
-                { "enemyId": "teleporting", "count": 10 }
-            ],
-            "intervalSec": 0.48
-        },
-        {
-            "enemies": [
-                { "enemyId": "exploding", "count": 12 },
-                { "enemyId": "armored", "count": 12 },
-                { "enemyId": "fast", "count": 10 }
-            ],
-            "intervalSec": 0.55
-        },
-        {
-            "enemies": [
-                { "enemyId": "teleporting", "count": 18 },
-                { "enemyId": "invisible", "count": 10 }
-            ],
-            "intervalSec": 0.45
-        },
-        {
-            "enemies": [
-                { "enemyId": "armored", "count": 20 },
-                { "enemyId": "healing", "count": 12 },
-                { "enemyId": "damageflash", "count": 8 }
-            ],
-            "intervalSec": 0.48
-        },
-        {
-            "enemies": [
-                { "enemyId": "fast", "count": 28 },
-                { "enemyId": "exploding", "count": 10 }
-            ],
-            "intervalSec": 0.3
-        },
-        {
-            "enemies": [
-                { "enemyId": "teleporting", "count": 20 },
-                { "enemyId": "armored", "count": 15 },
-                { "enemyId": "invisible", "count": 12 },
-                { "enemyId": "healing", "count": 8 }
-            ],
-            "intervalSec": 0.4
         }
     ]
 }

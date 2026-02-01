@@ -44,6 +44,16 @@ export type EnemyTarget = {
   y: number;
 };
 
+export type ProjectileSpawnEvent = {
+  targetEnemyId: number;
+  targetX: number;
+  targetY: number;
+  startX: number;
+  startY: number;
+  damage: number;
+  towerTypeId: string;
+};
+
 function distanceSquared(ax: number, ay: number, bx: number, by: number) {
   const dx = bx - ax;
   const dy = by - ay;
@@ -101,10 +111,10 @@ export function updateTowers(params: {
   towers: TowerInstance[];
   enemies: EnemyTarget[];
   dt: number;
-}): { towers: TowerInstance[]; damageEvents: Array<{ enemyId: number; dmg: number }> } {
+}): { towers: TowerInstance[]; projectileSpawnEvents: ProjectileSpawnEvent[] } {
   const { towers, enemies, dt } = params;
 
-  const damageEvents: Array<{ enemyId: number; dmg: number }> = [];
+  const projectileSpawnEvents: ProjectileSpawnEvent[] = [];
   const nextTowers: TowerInstance[] = [];
 
   for (const tower of towers) {
@@ -134,7 +144,15 @@ export function updateTowers(params: {
       nextDirRow = towerDirRowFromVector(dx, dy);
 
       if (nextCooldown <= 0) {
-        damageEvents.push({ enemyId: bestTarget.id, dmg: tower.damage });
+        projectileSpawnEvents.push({
+          targetEnemyId: bestTarget.id,
+          targetX: bestTarget.x,
+          targetY: bestTarget.y,
+          startX: tower.x,
+          startY: tower.y,
+          damage: tower.damage,
+          towerTypeId: tower.typeId
+        });
         nextCooldown = 1 / Math.max(0.1, tower.fireRate);
       }
     }
@@ -147,5 +165,5 @@ export function updateTowers(params: {
     });
   }
 
-  return { towers: nextTowers, damageEvents };
+  return { towers: nextTowers, projectileSpawnEvents };
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FastForward, Pause, Play, Save, Settings, Trash2 } from "lucide-react";
+import { FastForward, Pause, Play, Volume2, VolumeX, Trash2 } from "lucide-react";
+import { audioManager } from "./audio/audio";
 
 import type { EnemiesJson, MapJson, TowersJson, WaveSetJson } from "./page";
 
@@ -10,6 +11,8 @@ import type { EnemyInstance, EnemyType } from "./engine/enemy";
 import { applyEnemyDamage, spawnEnemy, updateEnemies } from "./engine/enemy";
 import type { TowerInstance, TowerType } from "./engine/tower";
 import { placeTower, updateTowers } from "./engine/tower";
+import type { ProjectileInstance } from "./engine/projectile";
+import { getTowerProjectileType, spawnProjectile, updateProjectiles } from "./engine/projectile";
 
 type SpeedMode = "pause" | "play" | "fast";
 type UpgradePath = 0 | 1 | 2;
@@ -58,6 +61,8 @@ export default function TowerDefenseClient(props: {
     const nextEnemyIdRef = useRef(1);
     const towerListRef = useRef<ExtendedTowerInstance[]>([]);
     const nextTowerIdRef = useRef(1);
+    const projectileListRef = useRef<ProjectileInstance[]>([]);
+    const nextProjectileIdRef = useRef(1);
 
     const currentWaveIndexRef = useRef(0);
     const totalSpawnedInCurrentWaveRef = useRef(0);
@@ -65,6 +70,7 @@ export default function TowerDefenseClient(props: {
     const currentEnemyGroupIndexRef = useRef(0);
     const spawnedInCurrentEnemyGroupRef = useRef(0);
     const playerLivesRef = useRef(20);
+    const musicStartedRef = useRef(false);
 
     const [speedMode, setSpeedMode] = useState<SpeedMode>("pause");
     const [selectedTowerTypeId, setSelectedTowerTypeId] = useState("ninja_basic");
@@ -73,6 +79,9 @@ export default function TowerDefenseClient(props: {
     const [playerLivesUI, setPlayerLivesUI] = useState(20);
     const [currentWaveIndexUI, setCurrentWaveIndexUI] = useState(0);
     const [hoveredTowerId, setHoveredTowerId] = useState<number | null>(null);
+    const [musicVolume, setMusicVolumeState] = useState(audioManager.getMusicVolume());
+    const [sfxVolume, setSfxVolumeState] = useState(audioManager.getSfxVolume());
+    const [isMuted, setIsMuted] = useState(audioManager.getIsMuted());
 
     const mapGrid = map.grid;
     const mapRowCount = mapGrid.length;
@@ -84,7 +93,11 @@ export default function TowerDefenseClient(props: {
 
     const requestRender = useCallback(() => {
         const renderNow = renderFunctionRef.current;
-        if (renderNow === null) return;
+
+        if (renderNow === null) {
+            return;
+        }
+
         renderNow();
     }, []);
 
@@ -93,23 +106,31 @@ export default function TowerDefenseClient(props: {
 
     const enemyTypesLookup = useMemo(() => {
         const lookupMap = new Map<string, EnemyType>();
+
         for (const enemyType of enemies.types) {
             lookupMap.set(enemyType.id, enemyType as EnemyType);
         }
+
         return lookupMap;
     }, [enemies.types]);
 
     const towerTypesLookup = useMemo(() => {
         const lookupMap = new Map<string, TowerType>();
+
         for (const towerType of towers.types) {
             lookupMap.set(towerType.id, towerType as unknown as TowerType);
         }
+
         return lookupMap;
     }, [towers.types]);
 
     function getCanvasContext() {
         const canvas = canvasRef.current;
-        if (canvas === null) return null;
+
+        if (canvas === null) {
+            return null;
+        }
+
         return canvas.getContext("2d");
     }
 
@@ -122,7 +143,10 @@ export default function TowerDefenseClient(props: {
 
         const canvasWidth = container.clientWidth;
         const canvasHeight = container.clientHeight;
-        const tileSize = Math.min(canvasWidth / mapColumnCount, canvasHeight / mapRowCount);
+        const tileSize = Math.min(
+            canvasWidth / mapColumnCount,
+            canvasHeight / mapRowCount
+        );
         const gridWidth = mapColumnCount * tileSize;
         const gridHeight = mapRowCount * tileSize;
         const gridOffsetX = (canvasWidth - gridWidth) / 2;
@@ -147,7 +171,9 @@ export default function TowerDefenseClient(props: {
         const canvas = canvasRef.current;
         const container = containerRef.current;
 
-        if (canvas === null || container === null) return;
+        if (canvas === null || container === null) {
+            return;
+        }
 
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
@@ -159,7 +185,10 @@ export default function TowerDefenseClient(props: {
         canvas.style.height = `${containerHeight}px`;
 
         const context = canvas.getContext("2d");
-        if (context === null) return;
+
+        if (context === null) {
+            return;
+        }
 
         context.setTransform(1, 0, 0, 1, 0, 0);
         context.scale(devicePixelRatio, devicePixelRatio);
@@ -172,8 +201,28 @@ export default function TowerDefenseClient(props: {
         groundTilesetImageRef.current = tilesetImage;
         tilesetImage.addEventListener("load", requestRender);
 
+        audioManager.preloadSounds().then(() => {
+            if (!audioManager.getIsMuted() && !musicStartedRef.current) {
+                audioManager.playBackgroundMusic();
+                musicStartedRef.current = true;
+            }
+        });
+
+        const handleUserInteraction = () => {
+            if (!audioManager.getIsMuted() && !musicStartedRef.current) {
+                audioManager.playBackgroundMusic();
+                musicStartedRef.current = true;
+            }
+        };
+
+        document.addEventListener('click', handleUserInteraction, { once: true });
+        document.addEventListener('keydown', handleUserInteraction, { once: true });
+
         return () => {
             tilesetImage.removeEventListener("load", requestRender);
+            audioManager.stopBackgroundMusic();
+            document.removeEventListener('click', handleUserInteraction);
+            document.removeEventListener('keydown', handleUserInteraction);
         };
     }, [requestRender]);
 
@@ -194,20 +243,39 @@ export default function TowerDefenseClient(props: {
 
             for (let pathOneLevel = 0; pathOneLevel <= 4; pathOneLevel++) {
                 for (let pathTwoLevel = 0; pathTwoLevel <= 4; pathTwoLevel++) {
-                    if (pathOneLevel > 0 && pathTwoLevel > 0) continue;
-                    towerUpgradeVariantUrls.push(`${baseSpriteName}_${pathOneLevel}-${pathTwoLevel}.png`);
+                    if (pathOneLevel > 0 && pathTwoLevel > 0) {
+                        continue;
+                    }
+
+                    towerUpgradeVariantUrls.push(
+                        `${baseSpriteName}_${pathOneLevel}-${pathTwoLevel}.png`
+                    );
                 }
             }
         }
 
+        const projectileSpriteUrls = [
+            "/textures/shuriken.png",
+            "/textures/bullet.png",
+            "/textures/blowdart.png",
+            "/textures/smokebomb.png"
+        ];
+
         const allUniqueImageUrls = Array.from(
-            new Set([...enemySpriteUrls, ...towerSpriteUrls, ...towerUpgradeVariantUrls])
+            new Set([
+                ...enemySpriteUrls,
+                ...towerSpriteUrls,
+                ...towerUpgradeVariantUrls,
+                ...projectileSpriteUrls
+            ])
         );
 
         const createdImages: HTMLImageElement[] = [];
 
         for (const imageUrl of allUniqueImageUrls) {
-            if (imageCache.current.has(imageUrl)) continue;
+            if (imageCache.current.has(imageUrl)) {
+                continue;
+            }
 
             const image = new Image();
             image.src = imageUrl;
@@ -231,12 +299,17 @@ export default function TowerDefenseClient(props: {
         }
 
         const currentWave = waveSet.waves[currentWaveIndexRef.current] as any;
-        if (!currentWave) return;
+
+        if (!currentWave) {
+            return;
+        }
 
         let enemyGroupsToSpawn: Array<{ enemyId: string; count: number }> = [];
 
         if ('enemyId' in currentWave && 'count' in currentWave) {
-            enemyGroupsToSpawn = [{ enemyId: currentWave.enemyId, count: currentWave.count }];
+            enemyGroupsToSpawn = [
+                { enemyId: currentWave.enemyId, count: currentWave.count }
+            ];
         }
         else if ('enemies' in currentWave) {
             enemyGroupsToSpawn = currentWave.enemies;
@@ -246,17 +319,26 @@ export default function TowerDefenseClient(props: {
         }
 
         let currentEnemyGroup = enemyGroupsToSpawn[currentEnemyGroupIndexRef.current];
-        if (!currentEnemyGroup) return;
+
+        if (!currentEnemyGroup) {
+            return;
+        }
 
         if (spawnedInCurrentEnemyGroupRef.current >= currentEnemyGroup.count) {
             currentEnemyGroupIndexRef.current += 1;
             spawnedInCurrentEnemyGroupRef.current = 0;
             currentEnemyGroup = enemyGroupsToSpawn[currentEnemyGroupIndexRef.current];
-            if (!currentEnemyGroup) return;
+
+            if (!currentEnemyGroup) {
+                return;
+            }
         }
 
         const enemyTypeToSpawn = enemyTypesLookup.get(currentEnemyGroup.enemyId);
-        if (!enemyTypeToSpawn) return;
+
+        if (!enemyTypeToSpawn) {
+            return;
+        }
 
         const spawnResult = spawnEnemy({
             enemies: enemyListRef.current,
@@ -274,7 +356,10 @@ export default function TowerDefenseClient(props: {
 
     function getMousePositionOnCanvas(mouseEvent: MouseEvent): Vec2 | null {
         const canvas = canvasRef.current;
-        if (canvas === null) return null;
+
+        if (canvas === null) {
+            return null;
+        }
 
         const canvasBounds = canvas.getBoundingClientRect();
 
@@ -294,22 +379,41 @@ export default function TowerDefenseClient(props: {
     const placeTowerAtGridPosition = useCallback(
         (gridX: number, gridY: number) => {
             const worldDimensions = calculateWorldDimensions();
-            if (worldDimensions === null) return;
 
-            const isInsideGrid = gridX >= 0 && gridY >= 0 && gridX < mapColumnCount && gridY < mapRowCount;
-            if (!isInsideGrid) return;
+            if (worldDimensions === null) {
+                return;
+            }
+
+            const isInsideGrid = gridX >= 0 &&
+                gridY >= 0 &&
+                gridX < mapColumnCount &&
+                gridY < mapRowCount;
+
+            if (!isInsideGrid) {
+                return;
+            }
 
             const gridCellValue = mapGrid[gridY][gridX];
-            const isWallOrPath = gridCellValue === map.gridLegend.wall || gridCellValue === map.gridLegend.path;
-            if (isWallOrPath) return;
+            const isWallOrPath = gridCellValue === map.gridLegend.wall ||
+                gridCellValue === map.gridLegend.path;
+
+            if (isWallOrPath) {
+                return;
+            }
 
             const isPositionOccupied = towerListRef.current.some(
                 (tower) => tower.gridX === gridX && tower.gridY === gridY
             );
-            if (isPositionOccupied) return;
+
+            if (isPositionOccupied) {
+                return;
+            }
 
             const selectedTowerType = towerTypesLookup.get(selectedTowerTypeId);
-            if (!selectedTowerType || playerMoney < selectedTowerType.cost) return;
+
+            if (!selectedTowerType || playerMoney < selectedTowerType.cost) {
+                return;
+            }
 
             const towerCenterPosition: Vec2 = {
                 x: worldDimensions.gridOffsetX + (gridX + 0.5) * worldDimensions.tileSize,
@@ -357,7 +461,11 @@ export default function TowerDefenseClient(props: {
 
     const calculateUpgradeCost = (tower: ExtendedTowerInstance): number => {
         const baseTowerType = towerTypesLookup.get(tower.typeId);
-        if (!baseTowerType) return 999;
+
+        if (!baseTowerType) {
+            return 999;
+        }
+
         return Math.floor(baseTowerType.cost * (1.5 ** (tower.level + 1)));
     };
 
@@ -366,16 +474,30 @@ export default function TowerDefenseClient(props: {
     };
 
     const upgradeTowerById = useCallback((towerId: number, upgradePath: 1 | 2) => {
-        const towerIndex = towerListRef.current.findIndex((tower) => tower.id === towerId);
-        if (towerIndex === -1) return;
+        const towerIndex = towerListRef.current.findIndex(
+            (tower) => tower.id === towerId
+        );
+
+        if (towerIndex === -1) {
+            return;
+        }
 
         const towerToUpgrade = towerListRef.current[towerIndex];
         const upgradeCost = calculateUpgradeCost(towerToUpgrade);
-        if (playerMoney < upgradeCost) return;
 
-        const newUpgradePath = towerToUpgrade.level === 0 ? upgradePath : towerToUpgrade.upgradePath;
+        if (playerMoney < upgradeCost) {
+            return;
+        }
+
+        const newUpgradePath = towerToUpgrade.level === 0
+            ? upgradePath
+            : towerToUpgrade.upgradePath;
+
         const baseTowerType = towerTypesLookup.get(towerToUpgrade.typeId);
-        if (!baseTowerType) return;
+
+        if (!baseTowerType) {
+            return;
+        }
 
         let damageMultiplier = 1;
         let rangeMultiplier = 1;
@@ -393,7 +515,10 @@ export default function TowerDefenseClient(props: {
         }
 
         const worldDimensions = calculateWorldDimensions();
-        if (!worldDimensions) return;
+
+        if (!worldDimensions) {
+            return;
+        }
 
         const upgradedTower: ExtendedTowerInstance = {
             ...towerToUpgrade,
@@ -434,13 +559,20 @@ export default function TowerDefenseClient(props: {
     }, [playerMoney, calculateWorldDimensions, towerTypesLookup, requestRender]);
 
     const sellTowerById = useCallback((towerId: number) => {
-        const towerIndex = towerListRef.current.findIndex((tower) => tower.id === towerId);
-        if (towerIndex === -1) return;
+        const towerIndex = towerListRef.current.findIndex(
+            (tower) => tower.id === towerId
+        );
+
+        if (towerIndex === -1) {
+            return;
+        }
 
         const towerToSell = towerListRef.current[towerIndex];
         const sellValue = calculateSellValue(towerToSell);
 
-        towerListRef.current = towerListRef.current.filter((tower) => tower.id !== towerId);
+        towerListRef.current = towerListRef.current.filter(
+            (tower) => tower.id !== towerId
+        );
         setPlayerMoney((previousMoney) => previousMoney + sellValue);
         setSelectedTowerId(null);
         requestRender();
@@ -461,14 +593,23 @@ export default function TowerDefenseClient(props: {
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (canvas === null) return;
+
+        if (canvas === null) {
+            return;
+        }
 
         const handleMouseMove = (mouseEvent: MouseEvent) => {
             const worldDimensions = calculateWorldDimensions();
-            if (worldDimensions === null) return;
+
+            if (worldDimensions === null) {
+                return;
+            }
 
             const mousePosition = getMousePositionOnCanvas(mouseEvent);
-            if (mousePosition === null) return;
+
+            if (mousePosition === null) {
+                return;
+            }
 
             const gridCell = convertCanvasPositionToGridCell(worldDimensions, mousePosition);
             const towerAtPosition = towerListRef.current.find(
@@ -494,14 +635,26 @@ export default function TowerDefenseClient(props: {
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (canvas === null) return;
+
+        if (canvas === null) {
+            return;
+        }
 
         const handleClick = (mouseEvent: MouseEvent) => {
+            if (!audioManager.getIsMuted() && !musicStartedRef.current) {
+                audioManager.playBackgroundMusic();
+                musicStartedRef.current = true;
+            }
+
             const worldDimensions = calculateWorldDimensions();
-            if (worldDimensions === null) return;
+
+            if (worldDimensions === null)
+                return;
 
             const mousePosition = getMousePositionOnCanvas(mouseEvent);
-            if (mousePosition === null) return;
+
+            if (mousePosition === null)
+                return;
 
             const isGameOver = playerLivesRef.current === 0;
             const currentWaveIndex = currentWaveIndexRef.current;
@@ -556,11 +709,16 @@ export default function TowerDefenseClient(props: {
 
     const updateGame = useCallback(
         (deltaTime: number) => {
-            if (speedMultiplier <= 0) return;
+            if (speedMultiplier <= 0) {
+                return;
+            }
 
             const scaledDeltaTime = deltaTime * speedMultiplier;
             const currentWave = waveSet.waves[currentWaveIndexRef.current] as any;
-            if (!currentWave) return;
+
+            if (!currentWave) {
+                return;
+            }
 
             let totalEnemiesInWave = 0;
 
@@ -568,7 +726,10 @@ export default function TowerDefenseClient(props: {
                 totalEnemiesInWave = currentWave.count;
             }
             else if ('enemies' in currentWave) {
-                totalEnemiesInWave = currentWave.enemies.reduce((sum: number, group: any) => sum + group.count, 0);
+                totalEnemiesInWave = currentWave.enemies.reduce(
+                    (sum: number, group: any) => sum + group.count,
+                    0
+                );
             }
 
             spawnTimerRef.current += scaledDeltaTime;
@@ -577,11 +738,16 @@ export default function TowerDefenseClient(props: {
                 spawnTimerRef.current -= currentWave.intervalSec;
                 spawnEnemyFromCurrentWave();
 
-                if (totalSpawnedInCurrentWaveRef.current >= totalEnemiesInWave) break;
+                if (totalSpawnedInCurrentWaveRef.current >= totalEnemiesInWave) {
+                    break;
+                }
             }
 
             const worldDimensions = calculateWorldDimensions();
-            if (worldDimensions === null) return;
+
+            if (worldDimensions === null) {
+                return;
+            }
 
             const enemyUpdate = updateEnemies({
                 enemies: enemyListRef.current,
@@ -591,15 +757,52 @@ export default function TowerDefenseClient(props: {
 
             const towerUpdate = updateTowers({
                 towers: towerListRef.current,
-                enemies: enemyUpdate.enemies.map((enemy) => ({ id: enemy.id, x: enemy.x, y: enemy.y })),
+                enemies: enemyUpdate.enemies.map((enemy) => ({
+                    id: enemy.id,
+                    x: enemy.x,
+                    y: enemy.y
+                })),
                 dt: scaledDeltaTime
             });
 
-            const enemiesAfterDamage = applyEnemyDamage(enemyUpdate.enemies, towerUpdate.damageEvents);
+            for (const spawnEvent of towerUpdate.projectileSpawnEvents) {
+                const projectileType = getTowerProjectileType(spawnEvent.towerTypeId);
+                const spawnResult = spawnProjectile({
+                    projectiles: projectileListRef.current,
+                    nextId: nextProjectileIdRef.current,
+                    type: projectileType,
+                    start: { x: spawnEvent.startX, y: spawnEvent.startY },
+                    target: { x: spawnEvent.targetX, y: spawnEvent.targetY },
+                    targetEnemyId: spawnEvent.targetEnemyId,
+                    damage: spawnEvent.damage
+                });
 
-            // Préserver les propriétés étendues des tours
+                projectileListRef.current = spawnResult.projectiles;
+                nextProjectileIdRef.current = spawnResult.nextId;
+
+                audioManager.playTowerShoot(spawnEvent.towerTypeId);
+            }
+
+            const projectileUpdate = updateProjectiles({
+                projectiles: projectileListRef.current,
+                enemies: enemyUpdate.enemies.map((enemy) => ({
+                    id: enemy.id,
+                    x: enemy.x,
+                    y: enemy.y
+                })),
+                dt: scaledDeltaTime
+            });
+
+            projectileListRef.current = projectileUpdate.projectiles;
+
+            const enemiesAfterDamage = applyEnemyDamage(
+                enemyUpdate.enemies,
+                projectileUpdate.hitEvents
+            );
+
             const updatedTowers: ExtendedTowerInstance[] = towerUpdate.towers.map((updatedTower) => {
                 const existingTower = towerListRef.current.find((t) => t.id === updatedTower.id);
+
                 if (existingTower) {
                     return {
                         ...updatedTower,
@@ -608,7 +811,7 @@ export default function TowerDefenseClient(props: {
                         totalCost: existingTower.totalCost
                     } as ExtendedTowerInstance;
                 }
-                // Cela ne devrait jamais arriver, mais par sécurité
+
                 return {
                     ...updatedTower,
                     level: 0,
@@ -618,23 +821,34 @@ export default function TowerDefenseClient(props: {
             });
 
             let moneyEarned = 0;
+            let enemiesKilled = 0;
 
-            for (const damageEvent of towerUpdate.damageEvents) {
-                const enemyBefore = enemyUpdate.enemies.find((enemy) => enemy.id === damageEvent.enemyId);
-                const enemyAfter = enemiesAfterDamage.find((enemy) => enemy.id === damageEvent.enemyId);
+            for (const hitEvent of projectileUpdate.hitEvents) {
+                const enemyBefore = enemyUpdate.enemies.find(
+                    (enemy) => enemy.id === hitEvent.enemyId
+                );
+                const enemyAfter = enemiesAfterDamage.find(
+                    (enemy) => enemy.id === hitEvent.enemyId
+                );
 
                 if (enemyBefore && !enemyAfter) {
                     const enemyType = enemyTypesLookup.get(enemyBefore.typeId);
                     moneyEarned += enemyType?.reward ?? 1;
+                    enemiesKilled++;
                 }
             }
 
-            if (moneyEarned > 0) {
+            if (moneyEarned > 0)
                 setPlayerMoney((previousMoney) => previousMoney + moneyEarned);
-            }
+
+            for (let i = 0; i < enemiesKilled; i++)
+                audioManager.playSfx('enemy-death');
 
             if (enemyUpdate.escapedCount > 0) {
-                playerLivesRef.current = Math.max(0, playerLivesRef.current - enemyUpdate.escapedCount);
+                playerLivesRef.current = Math.max(
+                    0,
+                    playerLivesRef.current - enemyUpdate.escapedCount
+                );
                 setPlayerLivesUI(playerLivesRef.current);
             }
 
@@ -664,7 +878,10 @@ export default function TowerDefenseClient(props: {
 
     function drawSpriteFrame(context: CanvasRenderingContext2D, params: SpriteDrawParams) {
         const spriteImage = imageCache.current.get(params.spriteSrc);
-        if (!spriteImage || !spriteImage.complete) return;
+
+        if (!spriteImage || !spriteImage.complete) {
+            return;
+        }
 
         const currentColumn = Math.floor(params.animTime * params.fps) % params.cols;
         const sourceX = currentColumn * params.frameSize;
@@ -683,11 +900,33 @@ export default function TowerDefenseClient(props: {
         );
     }
 
+    function drawProjectile(context: CanvasRenderingContext2D, projectile: ProjectileInstance) {
+        const projectileImage = imageCache.current.get(projectile.sprite.src);
+
+        if (!projectileImage || !projectileImage.complete) {
+            return;
+        }
+
+        context.save();
+        context.translate(projectile.x, projectile.y);
+        context.rotate(projectile.rotation);
+        context.drawImage(
+            projectileImage,
+            -projectile.sprite.size / 2,
+            -projectile.sprite.size / 2,
+            projectile.sprite.size,
+            projectile.sprite.size
+        );
+        context.restore();
+    }
+
     const renderFrame = useCallback(() => {
         const context = getCanvasContext();
         const worldDimensions = calculateWorldDimensions();
 
-        if (context === null || worldDimensions === null) return;
+        if (context === null || worldDimensions === null) {
+            return;
+        }
 
         if (playerLivesRef.current === 0) {
             context.fillStyle = "rgba(139, 0, 0, 0.95)";
@@ -695,7 +934,12 @@ export default function TowerDefenseClient(props: {
 
             context.strokeStyle = "#ff3333";
             context.lineWidth = 8;
-            context.strokeRect(20, 20, worldDimensions.canvasWidth - 40, worldDimensions.canvasHeight - 40);
+            context.strokeRect(
+                20,
+                20,
+                worldDimensions.canvasWidth - 40,
+                worldDimensions.canvasHeight - 40
+            );
 
             context.fillStyle = "#ff6666";
             context.font = "bold 72px monospace";
@@ -703,17 +947,33 @@ export default function TowerDefenseClient(props: {
             context.textBaseline = "middle";
             context.shadowColor = "rgba(255, 0, 0, 0.8)";
             context.shadowBlur = 20;
-            context.fillText("GAME OVER", worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 - 80);
+            context.fillText(
+                "GAME OVER",
+                worldDimensions.canvasWidth / 2,
+                worldDimensions.canvasHeight / 2 - 80
+            );
 
             context.shadowBlur = 0;
             context.fillStyle = "#ff9999";
             context.font = "bold 32px monospace";
-            context.fillText("Toutes vos tours ont été dépassées", worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 - 20);
+            context.fillText(
+                "Toutes vos tours ont été dépassées",
+                worldDimensions.canvasWidth / 2,
+                worldDimensions.canvasHeight / 2 - 20
+            );
 
             context.fillStyle = "#ffffff";
             context.font = "24px monospace";
-            context.fillText(`Wave ${currentWaveIndexUI + 1} terminée`, worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 + 50);
-            context.fillText(`Argent final: $${playerMoney}`, worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 + 90);
+            context.fillText(
+                `Wave ${currentWaveIndexUI + 1} terminée`,
+                worldDimensions.canvasWidth / 2,
+                worldDimensions.canvasHeight / 2 + 50
+            );
+            context.fillText(
+                `Argent final: $${playerMoney}`,
+                worldDimensions.canvasWidth / 2,
+                worldDimensions.canvasHeight / 2 + 90
+            );
 
             const buttonY = worldDimensions.canvasHeight / 2 + 150;
 
@@ -750,7 +1010,12 @@ export default function TowerDefenseClient(props: {
 
             context.strokeStyle = "#ffd700";
             context.lineWidth = 8;
-            context.strokeRect(20, 20, worldDimensions.canvasWidth - 40, worldDimensions.canvasHeight - 40);
+            context.strokeRect(
+                20,
+                20,
+                worldDimensions.canvasWidth - 40,
+                worldDimensions.canvasHeight - 40
+            );
 
             context.fillStyle = "#ffeb3b";
             context.font = "bold 72px monospace";
@@ -758,17 +1023,33 @@ export default function TowerDefenseClient(props: {
             context.textBaseline = "middle";
             context.shadowColor = "rgba(255, 215, 0, 0.8)";
             context.shadowBlur = 20;
-            context.fillText("VICTOIRE !", worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 - 80);
+            context.fillText(
+                "VICTOIRE !",
+                worldDimensions.canvasWidth / 2,
+                worldDimensions.canvasHeight / 2 - 80
+            );
 
             context.shadowBlur = 0;
             context.fillStyle = "#fff176";
             context.font = "bold 32px monospace";
-            context.fillText("Toutes les vagues vaincues !", worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 - 20);
+            context.fillText(
+                "Toutes les vagues vaincues !",
+                worldDimensions.canvasWidth / 2,
+                worldDimensions.canvasHeight / 2 - 20
+            );
 
             context.fillStyle = "#ffffff";
             context.font = "24px monospace";
-            context.fillText(`Wave ${totalWaves} terminée`, worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 + 50);
-            context.fillText(`Score final: $${playerMoney}`, worldDimensions.canvasWidth / 2, worldDimensions.canvasHeight / 2 + 90);
+            context.fillText(
+                `Wave ${totalWaves} terminée`,
+                worldDimensions.canvasWidth / 2,
+                worldDimensions.canvasHeight / 2 + 50
+            );
+            context.fillText(
+                `Score final: $${playerMoney}`,
+                worldDimensions.canvasWidth / 2,
+                worldDimensions.canvasHeight / 2 + 90
+            );
 
             const buttonY = worldDimensions.canvasHeight / 2 + 150;
 
@@ -960,6 +1241,9 @@ export default function TowerDefenseClient(props: {
             context.strokeRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
         }
 
+        for (const projectile of projectileListRef.current)
+            drawProjectile(context, projectile);
+
         if (worldDimensions.waypoints.length >= 2) {
             context.strokeStyle = "rgba(30, 209, 33, 0.25)";
             context.lineWidth = Math.max(2, worldDimensions.tileSize * 0.1);
@@ -979,7 +1263,17 @@ export default function TowerDefenseClient(props: {
         context.textBaseline = "alphabetic";
         context.fillText(`Mode: ${speedMode} (x${speedMultiplier})`, 10, 20);
         context.fillText(`Selected: ${selectedTowerTypeId}`, 10, 36);
-    }, [mapColumnCount, mapRowCount, selectedTowerTypeId, speedMode, speedMultiplier, currentWaveIndexUI, playerMoney, waveSet.waves.length, selectedTowerId]);
+    }, [
+        mapColumnCount,
+        mapRowCount,
+        selectedTowerTypeId,
+        speedMode,
+        speedMultiplier,
+        currentWaveIndexUI,
+        playerMoney,
+        waveSet.waves.length,
+        selectedTowerId
+    ]);
 
     useEffect(() => {
         renderFunctionRef.current = renderFrame;
@@ -988,7 +1282,10 @@ export default function TowerDefenseClient(props: {
     const onAnimationFrame = useCallback(
         (timestampMilliseconds: number) => {
             const previousTimestamp = lastTimestampRef.current || timestampMilliseconds;
-            const deltaTime = Math.min(0.05, (timestampMilliseconds - previousTimestamp) / 1000);
+            const deltaTime = Math.min(
+                0.05,
+                (timestampMilliseconds - previousTimestamp) / 1000
+            );
 
             lastTimestampRef.current = timestampMilliseconds;
 
@@ -1034,8 +1331,12 @@ export default function TowerDefenseClient(props: {
 
     function toggleSpeedMode() {
         setSpeedMode((previousMode) => {
-            if (previousMode === "pause") return "play";
-            if (previousMode === "play") return "fast";
+            if (previousMode === "pause")
+                return "play";
+
+            if (previousMode === "play")
+                return "fast";
+
             return "pause";
         });
     }
@@ -1112,7 +1413,10 @@ export default function TowerDefenseClient(props: {
 
                 {selectedTowerId !== null && (() => {
                     const selectedTower = towerListRef.current.find((tower) => tower.id === selectedTowerId);
-                    if (!selectedTower) return null;
+
+                    if (!selectedTower) {
+                        return null;
+                    }
 
                     const upgradeCost = calculateUpgradeCost(selectedTower);
                     const sellValue = calculateSellValue(selectedTower);
@@ -1162,7 +1466,9 @@ export default function TowerDefenseClient(props: {
 
                             {selectedTower.level === 0 && (
                                 <div className="space-y-2 mb-2">
-                                    <div className="text-xs text-gray-400 mb-1">Choisir un chemin d'upgrade:</div>
+                                    <div className="text-xs text-gray-400 mb-1">
+                                        Choisir un chemin d'upgrade:
+                                    </div>
 
                                     <button
                                         onClick={() => upgradeTowerById(selectedTower.id, 1)}
@@ -1176,10 +1482,16 @@ export default function TowerDefenseClient(props: {
                                     >
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1">
-                                                <div className="font-bold text-xs text-red-400">PATH 1: Dégâts</div>
-                                                <div className="text-xs text-gray-400">+35% DMG, +25% Fire Rate</div>
+                                                <div className="font-bold text-xs text-red-400">
+                                                    PATH 1: Dégâts
+                                                </div>
+                                                <div className="text-xs text-gray-400">
+                                                    +35% DMG, +25% Fire Rate
+                                                </div>
                                             </div>
-                                            <div className="text-yellow-400 font-bold text-sm">${upgradeCost}</div>
+                                            <div className="text-yellow-400 font-bold text-sm">
+                                                ${upgradeCost}
+                                            </div>
                                         </div>
                                     </button>
 
@@ -1195,10 +1507,16 @@ export default function TowerDefenseClient(props: {
                                     >
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1">
-                                                <div className="font-bold text-xs text-blue-400">PATH 2: Portée</div>
-                                                <div className="text-xs text-gray-400">+30% Range, +20% DPS</div>
+                                                <div className="font-bold text-xs text-blue-400">
+                                                    PATH 2: Portée
+                                                </div>
+                                                <div className="text-xs text-gray-400">
+                                                    +30% Range, +20% DPS
+                                                </div>
                                             </div>
-                                            <div className="text-yellow-400 font-bold text-sm">${upgradeCost}</div>
+                                            <div className="text-yellow-400 font-bold text-sm">
+                                                ${upgradeCost}
+                                            </div>
                                         </div>
                                     </button>
                                 </div>
@@ -1219,7 +1537,9 @@ export default function TowerDefenseClient(props: {
                                 >
                                     <div className="flex-1 text-left">
                                         <div className="font-bold text-xs text-white">UPGRADE</div>
-                                        <div className="text-xs text-gray-400">Path {selectedTower.upgradePath}</div>
+                                        <div className="text-xs text-gray-400">
+                                            Path {selectedTower.upgradePath}
+                                        </div>
                                     </div>
                                     <div className="text-yellow-400 font-bold">${upgradeCost}</div>
                                 </button>
@@ -1243,6 +1563,65 @@ export default function TowerDefenseClient(props: {
                 })()}
 
                 <div className="border-t-2 border-yellow-600 pt-3 mt-auto space-y-2">
+                    <div className="border-2 border-yellow-600 bg-gray-900 p-3 rounded space-y-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-mono text-xs font-bold text-yellow-400">AUDIO</h3>
+                            <button
+                                onClick={() => {
+                                    const newMutedState = audioManager.toggleMute();
+                                    setIsMuted(newMutedState);
+                                }}
+                                className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                            >
+                                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                            </button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="text-xs text-gray-400">Musique</label>
+                                    <span className="text-xs text-yellow-400">
+                                        {Math.round(musicVolume * 100)}%
+                                    </span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={musicVolume * 100}
+                                    onChange={(e) => {
+                                        const newVolume = parseInt(e.target.value) / 100;
+                                        audioManager.setMusicVolume(newVolume);
+                                        setMusicVolumeState(newVolume);
+                                    }}
+                                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                                />
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="text-xs text-gray-400">Effets</label>
+                                    <span className="text-xs text-yellow-400">
+                                        {Math.round(sfxVolume * 100)}%
+                                    </span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={sfxVolume * 100}
+                                    onChange={(e) => {
+                                        const newVolume = parseInt(e.target.value) / 100;
+                                        audioManager.setSfxVolume(newVolume);
+                                        setSfxVolumeState(newVolume);
+                                    }}
+                                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <button
                         onClick={toggleSpeedMode}
                         className={[
@@ -1257,18 +1636,6 @@ export default function TowerDefenseClient(props: {
                         <SpeedIcon className="w-5 h-5" />
                         {speedButtonLabel}
                     </button>
-
-                    <div className="grid grid-cols-2 gap-2">
-                        <button className="p-3 border-2 border-yellow-600 bg-gray-900 hover:bg-gray-800 rounded flex flex-col items-center transition-colors">
-                            <Settings className="w-5 h-5 mb-1" />
-                            <span className="text-xs">Paramètres</span>
-                        </button>
-
-                        <button className="p-3 border-2 border-yellow-600 bg-gray-900 hover:bg-gray-800 rounded flex flex-col items-center transition-colors">
-                            <Save className="w-5 h-5 mb-1" />
-                            <span className="text-xs">Sauvegarder</span>
-                        </button>
-                    </div>
                 </div>
             </aside>
         </main>
